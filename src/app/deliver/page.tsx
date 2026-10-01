@@ -22,15 +22,21 @@ import LiveMap from '@/components/common/LiveMap';
 
 export default function DeliverPage() {
   const router = useRouter();
-  const { currentUser, createDeliveryBooking } = usePortex();
+  const { currentUser, createDeliveryBooking, openAuthModal } = usePortex();
 
-  // Booking Form State
-  const [pickupAddress, setPickupAddress] = useState('Gomti Nagar Extension, Sector 4, Lucknow');
+  // Booking Form State - synced with currentUser.porterProfile if available
+  const [pickupAddress, setPickupAddress] = useState(
+    currentUser.porterProfile?.defaultPickupAddress || 'Gomti Nagar Extension, Sector 4, Lucknow'
+  );
   const [dropAddress, setDropAddress] = useState('E-3/776, Sector-I Aliganj, Lucknow, UP 226024');
-  const [packageType, setPackageType] = useState('Furniture & Home Appliances');
+  const [packageType, setPackageType] = useState(
+    currentUser.porterProfile?.frequentCargoType || 'Furniture & Home Appliances'
+  );
   const [weightKg, setWeightKg] = useState<number>(45);
   const [dimensions, setDimensions] = useState('120 x 80 x 60 cm');
-  const [selectedVehicleType, setSelectedVehicleType] = useState<DeliveryVehicleType>('TATA_ACE_MINI_TRUCK');
+  const [selectedVehicleType, setSelectedVehicleType] = useState<DeliveryVehicleType>(
+    currentUser.porterProfile?.preferredVehicle || 'TATA_ACE_MINI_TRUCK'
+  );
   const [pickupTime, setPickupTime] = useState<'NOW' | 'LATER'>('NOW');
   const [specialInstructions, setSpecialInstructions] = useState('Fragile items. Please bring packing blankets.');
   const [isBooking, setIsBooking] = useState(false);
@@ -131,6 +137,40 @@ export default function DeliverPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Form (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
+          {/* Active Shipper Profile Card */}
+          <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/20 rounded-2xl border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-sm">
+                <Truck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-slate-900 dark:text-white">
+                    Logged In Shipper: {currentUser.name}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">
+                    {currentUser.porterProfile?.userType === 'BUSINESS' ? 'GST Business' : 'Personal Parcel'}
+                  </span>
+                  {currentUser.porterProfile?.gstin && (
+                    <span className="hidden sm:inline text-[10px] font-mono text-emerald-700 dark:text-emerald-400 font-bold">
+                      {currentUser.porterProfile.gstin}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 truncate max-w-md">
+                  Saved Pickup: {currentUser.porterProfile?.defaultPickupAddress || pickupAddress}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => openAuthModal('login', 'PORTER_PARCEL')}
+              className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 underline self-start sm:self-auto cursor-pointer"
+            >
+              Change Shipper / Log In &rarr;
+            </button>
+          </div>
+
           <form onSubmit={handleBookDelivery} className="space-y-6">
             {/* 1. Pickup & Destination Points */}
             <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">

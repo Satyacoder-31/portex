@@ -15,13 +15,14 @@ import {
   ArrowRight,
   ExternalLink,
   Settings,
+  ShoppingBag,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import ListingCard from '@/components/marketplace/ListingCard';
 
 export default function UserDashboardPage() {
-  const { currentUser, listings, deleteListing, favorites, deliveries } = usePortex();
-  const [activeTab, setActiveTab] = useState<'listings' | 'deliveries' | 'wishlist' | 'addresses'>('listings');
+  const { currentUser, listings, deleteListing, favorites, deliveries, openAuthModal } = usePortex();
+  const [activeTab, setActiveTab] = useState<'listings' | 'deliveries' | 'wishlist' | 'addresses' | 'profile'>('profile');
 
   const myListings = listings.filter(l => l.sellerId === currentUser.id);
   const favoriteListings = listings.filter(l => favorites.includes(l.id));
@@ -48,10 +49,34 @@ export default function UserDashboardPage() {
             <p className="text-xs text-slate-500 mt-0.5">
               {currentUser.email} &bull; {currentUser.phone} &bull; {currentUser.city}
             </p>
+            {currentUser.porterProfile && (
+              <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mr-2">
+                🚚 Porter Shipper: {currentUser.porterProfile.userType}
+              </span>
+            )}
+            {currentUser.marketplaceProfile?.payoutUpiId && (
+              <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
+                💳 Payout: {currentUser.marketplaceProfile.payoutUpiId}
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => openAuthModal('login')}
+            className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 transition-all cursor-pointer"
+          >
+            Switch Account
+          </button>
+
+          <button
+            onClick={() => openAuthModal('register')}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+          >
+            Edit Porter / Seller Details
+          </button>
+
           <Link
             href="/sell"
             className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5"
@@ -71,8 +96,9 @@ export default function UserDashboardPage() {
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6 text-xs font-bold">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6 text-xs font-bold overflow-x-auto pb-1">
         {[
+          { id: 'profile', label: 'Porter & Seller Profile Details' },
           { id: 'listings', label: `My Listings (${myListings.length})` },
           { id: 'deliveries', label: `Deliveries & Trips (${deliveries.length})` },
           { id: 'wishlist', label: `Saved Wishlist (${favoriteListings.length})` },
@@ -81,7 +107,7 @@ export default function UserDashboardPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`pb-3 transition-colors relative ${
+            className={`pb-3 transition-colors relative whitespace-nowrap cursor-pointer ${
               activeTab === tab.id
                 ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -91,6 +117,155 @@ export default function UserDashboardPage() {
           </button>
         ))}
       </div>
+
+      {/* Tab 0: Porter & Seller Profile Configuration */}
+      {activeTab === 'profile' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Left Card: Porter Logistics & Parcel Shipper Details */}
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-emerald-500/30 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <Truck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                      Porter Logistics Profile
+                    </h3>
+                    <span className="text-[10px] text-slate-500">Parcel, courier &amp; truck booking preferences</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  {currentUser.porterProfile?.userType === 'BUSINESS' ? 'Business Shipper' : 'Personal Shipper'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Shipper Type</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {currentUser.porterProfile?.userType === 'BUSINESS' ? 'Commercial / Enterprise' : 'Individual Parcel'}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">GSTIN / Tax Credit</span>
+                  <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                    {currentUser.porterProfile?.gstin || 'Individual (No GST)'}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5 sm:col-span-2">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Default Pickup Address</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {currentUser.porterProfile?.defaultPickupAddress || `${currentUser.city}, Uttar Pradesh`}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">
+                    Pincode: {currentUser.porterProfile?.pickupPincode || '226010'} &bull; {currentUser.porterProfile?.pickupFloor || 'Ground Floor'} &bull; {currentUser.porterProfile?.hasLift ? 'Lift Available' : 'No Lift'}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Frequent Cargo</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {currentUser.porterProfile?.frequentCargoType || 'Furniture & Carton Boxes'}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Preferred Fleet</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {currentUser.porterProfile?.preferredVehicle?.replace(/_/g, ' ') || 'TATA ACE MINI TRUCK'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => openAuthModal('register', 'PORTER_PARCEL')}
+                className="w-full py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-bold text-xs rounded-xl border border-emerald-500/30 transition-all cursor-pointer"
+              >
+                Edit Porter Pickup &amp; Fleet Details &rarr;
+              </button>
+            </div>
+
+            {/* Right Card: Marketplace Seller Payout & Buyer Setup */}
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-blue-500/30 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                      Marketplace Buy &amp; Sell Profile
+                    </h3>
+                    <span className="text-[10px] text-slate-500">Seller payout UPI, store name &amp; buyer addresses</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  Zero Brokerage
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Instant Payout UPI ID (Essential for receiving money when products sell) */}
+                <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl space-y-0.5 sm:col-span-2 border border-emerald-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase block">
+                      Seller Payout Destination (Direct Transfer)
+                    </span>
+                    <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-bold">Active</span>
+                  </div>
+                  <span className="font-mono font-black text-sm text-emerald-800 dark:text-emerald-300">
+                    {currentUser.marketplaceProfile?.payoutUpiId || 'krishna.verma@okhdfcbank'}
+                  </span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block">
+                    Payments for items sold on PORTEX are credited instantly to this UPI ID upon buyer delivery.
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Seller Display Store</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {currentUser.marketplaceProfile?.shopOrDisplayName || `${currentUser.name}'s Verified Store`}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Buyer Payment Mode</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {currentUser.marketplaceProfile?.preferredPayment || 'UPI (Instant)'}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Seller Pickup Address</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                    {currentUser.marketplaceProfile?.sellerPickupAddress || 'E-3/776, Sector-I Aliganj, Lucknow, UP'}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Buyer Home Delivery</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                    {currentUser.marketplaceProfile?.buyerDeliveryAddress || 'Gomti Nagar Extension, Sector 4, Lucknow'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => openAuthModal('register', 'MARKETPLACE')}
+                className="w-full py-2 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-bold text-xs rounded-xl border border-blue-500/30 transition-all cursor-pointer"
+              >
+                Edit Seller Payout &amp; Delivery Settings &rarr;
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Tab 1: My Listings */}
       {activeTab === 'listings' && (

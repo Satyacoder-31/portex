@@ -47,10 +47,18 @@ export default function PostItemWizard({ onClose }: PostItemWizardProps) {
   const [images, setImages] = useState<string[]>([
     'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80',
   ]);
-  const [address, setAddress] = useState('Sector-I, Aliganj, Near Kapoor Crossing');
-  const [city, setCity] = useState('Lucknow');
+  const [address, setAddress] = useState(
+    currentUser.marketplaceProfile?.sellerPickupAddress ||
+    currentUser.porterProfile?.defaultPickupAddress ||
+    'Sector-I, Aliganj, Near Kapoor Crossing'
+  );
+  const [city, setCity] = useState(currentUser.city || 'Lucknow');
   const [state, setState] = useState('Uttar Pradesh');
-  const [pincode, setPincode] = useState('226024');
+  const [pincode, setPincode] = useState(
+    currentUser.marketplaceProfile?.sellerPickupPincode ||
+    currentUser.porterProfile?.pickupPincode ||
+    '226024'
+  );
   const [weightKg, setWeightKg] = useState<number>(3.5);
   const [dimensions, setDimensions] = useState('38 x 26 x 3 cm');
   const [eligibleForDelivery, setEligibleForDelivery] = useState(true);

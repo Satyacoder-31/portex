@@ -27,6 +27,7 @@ import {
   HelpCircle,
   Sun,
   Moon,
+  Banknote,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { UserRole } from '@/types';
@@ -44,6 +45,8 @@ export default function Navbar() {
     listings,
     theme,
     toggleTheme,
+    openAuthModal,
+    logoutUser,
   } = usePortex();
 
   const [selectedCity, setSelectedCity] = useState('Lucknow');
@@ -381,6 +384,32 @@ export default function Navbar() {
                     </div>
                   </div>
 
+                  {/* Porter & Marketplace Profile Status Badges */}
+                  {(currentUser.porterProfile || currentUser.marketplaceProfile) && (
+                    <div className="p-2 mb-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800 text-[10px] space-y-1">
+                      {currentUser.porterProfile && (
+                        <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-bold">
+                          <span className="flex items-center gap-1">
+                            <Truck className="w-3 h-3" /> Porter Shipper
+                          </span>
+                          <span className="text-[9px] bg-emerald-500/10 px-1.5 py-0.2 rounded">
+                            {currentUser.porterProfile.userType === 'BUSINESS' ? 'GST Business' : 'Personal'}
+                          </span>
+                        </div>
+                      )}
+                      {currentUser.marketplaceProfile?.payoutUpiId && (
+                        <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 font-bold">
+                          <span className="flex items-center gap-1">
+                            <Banknote className="w-3 h-3" /> UPI Linked
+                          </span>
+                          <span className="text-[9px] truncate max-w-[120px] font-mono text-slate-500">
+                            {currentUser.marketplaceProfile.payoutUpiId}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Switch Persona Section */}
                   <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     Switch Active Persona
@@ -409,10 +438,33 @@ export default function Navbar() {
                   </div>
 
                   <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1 space-y-1">
+                    {/* Log In / Switch Account Action Button */}
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false);
+                        openAuthModal('login');
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <UserIcon className="w-4 h-4 text-blue-500" />
+                      <span>Log In / Switch Account</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false);
+                        openAuthModal('register');
+                      }}
+                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Truck className="w-4 h-4 text-emerald-500" />
+                      <span>Porter &amp; Seller Onboarding Form</span>
+                    </button>
+
                     <Link
                       href="/dashboard"
                       onClick={() => setShowProfileDropdown(false)}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
                     >
                       <UserIcon className="w-4 h-4 text-blue-500" />
                       <span>My Dashboard &amp; Ads</span>
@@ -420,15 +472,15 @@ export default function Navbar() {
                     <Link
                       href="/tracking"
                       onClick={() => setShowProfileDropdown(false)}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
                     >
-                      <Truck className="w-4 h-4 text-emerald-500" />
+                      <Package className="w-4 h-4 text-emerald-500" />
                       <span>Live Shipments ({activeDeliveriesCount})</span>
                     </Link>
                     <Link
                       href="/admin"
                       onClick={() => setShowProfileDropdown(false)}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
                     >
                       <Building2 className="w-4 h-4 text-purple-500" />
                       <span>Admin &amp; Business GST</span>
@@ -452,6 +504,18 @@ export default function Navbar() {
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                         {theme === 'dark' ? '☀️ Switch Light' : '🌙 Switch Dark'}
                       </span>
+                    </button>
+
+                    {/* Log Out Button */}
+                    <button
+                      onClick={() => {
+                        logoutUser();
+                        setShowProfileDropdown(false);
+                      }}
+                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Log Out</span>
                     </button>
                   </div>
                 </div>
@@ -543,6 +607,30 @@ export default function Navbar() {
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
+
+              {/* Mobile Drawer Auth & Account Switcher Button */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openAuthModal('login');
+                  }}
+                  className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <UserIcon className="w-3.5 h-3.5" />
+                  <span>Log In / Switch</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openAuthModal('register');
+                  }}
+                  className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Truck className="w-3.5 h-3.5" />
+                  <span>Porter / Seller Setup</span>
+                </button>
+              </div>
 
               {/* Persona Switcher Pill */}
               <div className="p-3.5 bg-slate-100 dark:bg-slate-800 rounded-2xl space-y-2">

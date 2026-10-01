@@ -82,6 +82,19 @@ interface PortexStoreContextType {
   setTheme: (theme: 'light' | 'dark') => void;
   toggleTheme: () => void;
 
+  // Authentication & Onboarding
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  authModalTab: 'login' | 'register';
+  setAuthModalTab: (tab: 'login' | 'register') => void;
+  authInitialIntent: 'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE';
+  setAuthInitialIntent: (intent: 'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE') => void;
+  openAuthModal: (tab?: 'login' | 'register', intent?: 'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE') => void;
+  closeAuthModal: () => void;
+  loginUser: (user: User) => void;
+  logoutUser: () => void;
+  updateUserProfile: (updates: Partial<User>) => void;
+
   // Enterprise Admin / Business Profile
   businessProfile: BusinessProfile;
   updateBusinessProfile: (profile: Partial<BusinessProfile>) => void;
@@ -106,6 +119,76 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [incomingJob, setIncomingJob] = useState<IncomingJobRequest | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+
+  // Auth Modal & User state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
+  const [authInitialIntent, setAuthInitialIntent] = useState<'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE'>('ALL_IN_ONE');
+
+  // Restore saved user from localStorage
+  useEffect(() => {
+    try {
+      const savedUserStr = localStorage.getItem('portex-current-user');
+      if (savedUserStr) {
+        const parsed = JSON.parse(savedUserStr);
+        if (parsed && parsed.id) {
+          setCurrentUser(parsed);
+          if (parsed.role) setUserRole(parsed.role);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const openAuthModal = (
+    tab: 'login' | 'register' = 'login',
+    intent: 'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE' = 'ALL_IN_ONE'
+  ) => {
+    setAuthModalTab(tab);
+    setAuthInitialIntent(intent);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
+
+  const loginUser = (user: User) => {
+    setCurrentUser(user);
+    if (user.role) setUserRole(user.role);
+    try {
+      localStorage.setItem('portex-current-user', JSON.stringify(user));
+    } catch {
+      // ignore
+    }
+    setIsAuthModalOpen(false);
+    showToast(`Welcome back, ${user.name}! Logged in successfully.`);
+  };
+
+  const logoutUser = () => {
+    try {
+      localStorage.removeItem('portex-current-user');
+    } catch {
+      // ignore
+    }
+    setCurrentUser(CURRENT_USER);
+    setUserRole('BUYER');
+    showToast('Logged out. Session cleared.');
+  };
+
+  const updateUserProfile = (updates: Partial<User>) => {
+    setCurrentUser(prev => {
+      const updated = { ...prev, ...updates };
+      try {
+        localStorage.setItem('portex-current-user', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+    showToast('Profile and preferences updated successfully.');
+  };
 
   // Sync theme with documentElement and localStorage
   useEffect(() => {
@@ -500,6 +583,17 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         theme,
         setTheme,
         toggleTheme,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        authModalTab,
+        setAuthModalTab,
+        authInitialIntent,
+        setAuthInitialIntent,
+        openAuthModal,
+        closeAuthModal,
+        loginUser,
+        logoutUser,
+        updateUserProfile,
       }}
     >
       {children}

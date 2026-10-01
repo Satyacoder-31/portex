@@ -23,6 +23,38 @@ export type DeliveryStatusStage =
   | 'DELIVERED'
   | 'CANCELLED';
 
+export type UserIntent = 'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE';
+
+export interface PorterUserProfile {
+  userType: 'INDIVIDUAL' | 'BUSINESS' | 'ENTERPRISE';
+  businessName?: string;
+  gstin?: string;
+  defaultPickupAddress?: string;
+  pickupPincode?: string;
+  pickupFloor?: string;
+  hasLift?: boolean;
+  frequentCargoType?: string;
+  preferredVehicle?: DeliveryVehicleType;
+  needHelper?: boolean;
+  alternatePhone?: string;
+}
+
+export interface MarketplaceUserProfile {
+  canSell: boolean;
+  canBuy: boolean;
+  sellerType?: 'INDIVIDUAL' | 'VERIFIED_STORE' | 'DEALER';
+  shopOrDisplayName?: string;
+  payoutUpiId?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+  sellerPickupAddress?: string;
+  sellerPickupPincode?: string;
+  buyerDeliveryAddress?: string;
+  deliveryPincode?: string;
+  preferredPayment?: 'UPI' | 'COD' | 'CARD' | 'NETBANKING';
+  kycVerified?: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -34,6 +66,9 @@ export interface User {
   isVerified: boolean;
   rating: number;
   totalDeals: number;
+  userIntent?: UserIntent;
+  porterProfile?: PorterUserProfile;
+  marketplaceProfile?: MarketplaceUserProfile;
 }
 
 export interface Listing {
