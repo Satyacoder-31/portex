@@ -97,3 +97,8 @@
   stroke-dasharray: 8, 8;
   animation: dash 1.5s linear infinite;
 }
+
+/* Iconic OLX Dual-Tone Sell Button Ring (Cyan top-left, Yellow/Gold bottom-right) */
+.sell-button-ring {
+  background: conic-gradient(from 225deg, #002f34 0%, #23e5db 30%, #ffce32 70%, #002f34 100%);
+}
