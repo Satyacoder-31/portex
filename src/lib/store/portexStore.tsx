@@ -77,6 +77,11 @@ interface PortexStoreContextType {
     rating: number;
   };
 
+  // Theme Management (Light & Dark mode)
+  theme: 'light' | 'dark';
+  setTheme: (theme: 'light' | 'dark') => void;
+  toggleTheme: () => void;
+
   // Enterprise Admin / Business Profile
   businessProfile: BusinessProfile;
   updateBusinessProfile: (profile: Partial<BusinessProfile>) => void;
@@ -100,6 +105,57 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [isDriverOnline, setIsDriverOnline] = useState<boolean>(true);
   const [incomingJob, setIncomingJob] = useState<IncomingJobRequest | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+
+  // Sync theme with documentElement and localStorage
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem('portex-theme') as 'light' | 'dark' | null;
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        setThemeState(savedTheme);
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initial = prefersDark ? 'dark' : 'light';
+        setThemeState(initial);
+        if (initial === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const setTheme = (newTheme: 'light' | 'dark') => {
+    setThemeState(newTheme);
+    try {
+      localStorage.setItem('portex-theme', newTheme);
+      if (newTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   const [driverEarnings, setDriverEarnings] = useState({
     today: 2840,
@@ -447,6 +503,9 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         updateBusinessProfile,
         toastMessage,
         showToast,
+        theme,
+        setTheme,
+        toggleTheme,
       }}
     >
       {children}

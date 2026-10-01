@@ -25,6 +25,8 @@ import {
   Compass,
   Building2,
   HelpCircle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { UserRole } from '@/types';
@@ -33,7 +35,16 @@ import { CATEGORIES } from '@/lib/data/mockData';
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userRole, setUserRole, currentUser, deliveries, conversations, listings } = usePortex();
+  const {
+    userRole,
+    setUserRole,
+    currentUser,
+    deliveries,
+    conversations,
+    listings,
+    theme,
+    toggleTheme,
+  } = usePortex();
 
   const [selectedCity, setSelectedCity] = useState('Lucknow');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
@@ -150,26 +161,26 @@ export default function Navbar() {
         </div>
 
         {/* Main Navbar Bar */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1 sm:gap-4">
           {/* Left: Brand Logo & City Picker */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-4">
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               aria-label="Open navigation menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Brand Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 text-white flex items-center justify-center font-black text-xl shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
                 P
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <span className="font-black text-xl sm:text-2xl tracking-tight text-slate-900 dark:text-white">
+                  <span className="font-black text-lg sm:text-2xl tracking-tight text-slate-900 dark:text-white">
                     PORT<span className="text-blue-600 dark:text-blue-400">EX</span>
                   </span>
                   <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hidden sm:inline">
@@ -186,11 +197,11 @@ export default function Navbar() {
             <div className="relative" ref={cityDropdownRef}>
               <button
                 onClick={() => setShowCityDropdown(!showCityDropdown)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200/80 dark:border-slate-700/60"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200/80 dark:border-slate-700/60"
               >
                 <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <span className="truncate max-w-[80px] sm:max-w-[110px]">{selectedCity}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+                <span className="truncate max-w-[65px] sm:max-w-[110px]">{selectedCity}</span>
+                <ChevronDown className="w-3 h-3 text-slate-400 flex-shrink-0" />
               </button>
 
               {showCityDropdown && (
@@ -239,7 +250,7 @@ export default function Navbar() {
               />
               <button
                 type="submit"
-                className="mr-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                className="mr-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm cursor-pointer"
               >
                 Search
               </button>
@@ -247,7 +258,21 @@ export default function Navbar() {
           </div>
 
           {/* Right: Quick Action CTAs & User Menu */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Theme Toggle (Light / Dark Mode Button) */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle dark and light mode"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 text-amber-400 hover:rotate-45 transition-transform" />
+              ) : (
+                <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300 hover:-rotate-12 transition-transform" />
+              )}
+            </button>
+
             {/* Mobile Search Icon Toggle */}
             <button
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
@@ -257,29 +282,29 @@ export default function Navbar() {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Deliver Something CTA (Porter mini truck) */}
+            {/* Deliver Something CTA (Porter mini truck) - Desktop only (in bottom nav on mobile) */}
             <Link
               href="/deliver"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs border border-emerald-500/30 transition-all hover:scale-[1.02] shadow-sm"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs border border-emerald-500/30 transition-all hover:scale-[1.02] shadow-sm"
             >
               <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span className="hidden sm:inline">Deliver</span>
               <span className="hidden xl:inline">Something</span>
             </Link>
 
-            {/* Post Ad / Sell CTA */}
+            {/* Post Ad / Sell CTA - Desktop only (in bottom nav on mobile) */}
             <Link
               href="/sell"
-              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02]"
+              className="hidden md:flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02]"
             >
               <PlusCircle className="w-4 h-4" />
               <span>+ Sell</span>
             </Link>
 
-            {/* Chat Icon with live unread badge */}
+            {/* Chat Icon with live unread badge - Hidden on mobile (already in bottom nav) */}
             <Link
               href="/chat"
-              className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="hidden sm:flex relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Chat & Offers"
             >
               <MessageSquare className="w-5 h-5" />
@@ -408,6 +433,26 @@ export default function Navbar() {
                       <Building2 className="w-4 h-4 text-purple-500" />
                       <span>Admin &amp; Business GST</span>
                     </Link>
+
+                    {/* Dark / Light Mode Switcher inside Profile Menu */}
+                    <button
+                      onClick={() => {
+                        toggleTheme();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-colors border-t border-slate-100 dark:border-slate-800 mt-1 pt-2 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        {theme === 'dark' ? (
+                          <Sun className="w-4 h-4 text-amber-400" />
+                        ) : (
+                          <Moon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        )}
+                        <span>Theme: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        {theme === 'dark' ? '☀️ Switch Light' : '🌙 Switch Dark'}
+                      </span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -519,6 +564,33 @@ export default function Navbar() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Theme Toggle in Mobile Drawer */}
+              <div className="p-3.5 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-between border border-slate-200/80 dark:border-slate-700/60">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm">
+                    {theme === 'dark' ? (
+                      <Moon className="w-4 h-4 text-indigo-400" />
+                    ) : (
+                      <Sun className="w-4 h-4 text-amber-500" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">
+                      {theme === 'dark' ? 'Dark Theme' : 'Light Theme'}
+                    </div>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Tap to switch interface theme
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleTheme}
+                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95 transition-all cursor-pointer"
+                >
+                  {theme === 'dark' ? '☀️ Switch Light' : '🌙 Switch Dark'}
+                </button>
               </div>
 
               {/* Primary Mobile Action Buttons */}
