@@ -77,7 +77,7 @@ function MarketplaceContent() {
   }, [listings, searchQuery, selectedCategory, selectedCondition, maxPrice, verifiedOnly, sortBy]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       {/* Top Banner / Heading */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>
@@ -109,7 +109,7 @@ function MarketplaceContent() {
       </div>
 
       {/* Main Grid: Left Filters Sidebar + Right Listings Results */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
         {/* Left Filter Sidebar */}
         <aside
           className={`space-y-6 ${
@@ -256,9 +256,9 @@ function MarketplaceContent() {
             </div>
           </div>
 
-          {/* Listings Grid */}
+          {/* Listings Grid: 2 items per line on mobile, 3 on desktop */}
           {filteredListings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
               {filteredListings.map(listing => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}

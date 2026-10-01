@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   User as UserIcon,
   ChevronDown,
+  ChevronRight,
   Menu,
   X,
   Bell,
@@ -305,14 +306,34 @@ export default function Navbar() {
             <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="flex items-center gap-1.5 p-1 rounded-xl hover:ring-2 hover:ring-blue-500 transition-all"
+                className="group flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-300/80 dark:border-slate-700 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                title={`Account: ${currentUser.name} (${roleMeta[userRole].title})`}
+                aria-label="Profile and account menu"
               >
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-8 h-8 rounded-xl object-cover border border-slate-300 dark:border-slate-700 shadow-sm"
-                />
-                <span className={`w-2 h-2 rounded-full ${roleMeta[userRole].color} hidden sm:block`} />
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+                    }}
+                    className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 shadow-sm"
+                  />
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${roleMeta[userRole].color} absolute -bottom-0.5 -right-0.5 border-2 border-white dark:border-slate-900`}
+                  />
+                </div>
+
+                <div className="hidden sm:flex flex-col text-left leading-tight">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[85px]">
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                  <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                    {roleMeta[userRole].title}
+                  </span>
+                </div>
+
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-transform duration-200 hidden sm:block" />
               </button>
 
               {showProfileDropdown && (
@@ -443,7 +464,41 @@ export default function Navbar() {
             </div>
 
             {/* Drawer Body */}
-            <div className="p-5 space-y-6 flex-1">
+            <div className="p-5 space-y-5 flex-1">
+              {/* Prominent User Profile Card on Mobile Drawer */}
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/60 rounded-2xl border border-blue-200/80 dark:border-slate-700 flex items-center gap-3.5 hover:shadow-md transition-all"
+              >
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+                    }}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-500 shadow-md"
+                  />
+                  <span
+                    className={`w-3 h-3 rounded-full ${roleMeta[userRole].color} absolute bottom-0 right-0 border-2 border-white dark:border-slate-900`}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                      {currentUser.name}
+                    </h4>
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
+                  <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
+                    {roleMeta[userRole].title} Mode
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </Link>
+
               {/* Persona Switcher Pill */}
               <div className="p-3.5 bg-slate-100 dark:bg-slate-800 rounded-2xl space-y-2">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">

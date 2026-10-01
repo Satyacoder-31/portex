@@ -260,7 +260,7 @@ export default function HomePage() {
       </section>
 
       {/* 4. FEATURED / NEARBY MARKETPLACE LISTINGS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6">
           {listings.slice(0, 6).map(listing => (
             <ListingCard key={listing.id} listing={listing} />
           ))}

@@ -96,7 +96,7 @@ export default function UserDashboardPage() {
       {activeTab === 'listings' && (
         <div className="space-y-4">
           {myListings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
               {myListings.map(item => (
                 <div
                   key={item.id}
@@ -195,7 +195,7 @@ export default function UserDashboardPage() {
 
       {/* Tab 3: Saved Wishlist */}
       {activeTab === 'wishlist' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
           {favoriteListings.map(item => (
             <ListingCard key={item.id} listing={item} />
           ))}
