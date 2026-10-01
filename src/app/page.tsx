@@ -116,14 +116,14 @@ export default function HomePage() {
         {/* ========================================================
             1. HERO SECTION (Exact Royal Blue Promotional Banner)
            ======================================================== */}
-        <section className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-r from-[#003884] via-[#004dc7] to-[#1e50ff] text-white p-4 sm:p-7 shadow-lg shadow-blue-900/15">
+        <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#003884] via-[#004dc7] to-[#1e50ff] text-white p-3 sm:p-5 shadow-lg shadow-blue-900/15">
           {/* Subtle Ambient Glows */}
           <div className="absolute top-0 right-0 w-72 h-72 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-blue-400/20 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-center">
+          <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-5 items-center">
             {/* Left Content (Text, Badge, Price tag & CTA) */}
-            <div className="lg:col-span-7 space-y-3 sm:space-y-4">
+            <div className="lg:col-span-7 space-y-2 sm:space-y-3">
               {/* Top Banner Header with Stars */}
               <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-bold tracking-wide">
@@ -138,12 +138,11 @@ export default function HomePage() {
               </div>
 
               {/* Main Headline */}
-              <div className="space-y-1 sm:space-y-2">
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.15]">
-                  Get Top 5 <br className="hidden sm:block" />
-                  <span className="text-[#23e5db]">OLX-Recommended</span> Sellers
+              <div className="space-y-1">
+                <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-[1.15]">
+                  India's Top Verified <span className="text-[#23e5db]">Sellers</span> & Instant Delivery
                 </h1>
-                <p className="text-xs sm:text-sm text-blue-100 max-w-lg font-normal leading-relaxed">
+                <p className="text-xs text-blue-100 max-w-lg font-normal leading-relaxed">
                   Browse hand-inspected pre-owned cars, laptops, furniture and bikes with instant Porter mini truck dispatch.
                 </p>
               </div>
@@ -170,7 +169,7 @@ export default function HomePage() {
               </div>
 
               {/* Primary Action Button (Be Elite Buyer) */}
-              <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center gap-2">
                 <Link
                   href="/marketplace?verified=true"
                   className="px-6 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-[#ffce32] to-amber-400 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm shadow-md shadow-yellow-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
@@ -223,8 +222,8 @@ export default function HomePage() {
                 {/* Inner Screen Feed */}
                 <div className="rounded-2xl bg-white text-slate-900 p-2 space-y-1.5 text-xs overflow-hidden">
                   <div className="flex items-center justify-between pb-1 border-b border-slate-100">
-                    <span className="font-extrabold text-[10px] text-[#002f34]">
-                      OLX Recommended &bull; Top 5
+                    <span className="font-extrabold text-[10px] text-blue-700">
+                      PORTEX Verified &bull; Top 5
                     </span>
                     <span className="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5">
                       <CheckCircle2 className="w-2.5 h-2.5" /> Verified
@@ -278,8 +277,8 @@ export default function HomePage() {
 
                   {/* Phone Bottom CTA */}
                   <div className="pt-0.5 text-center">
-                    <span className="inline-block w-full py-1 rounded-lg bg-[#002f34] text-white text-[9px] font-bold">
-                      View All 5 Recommended Sellers
+                    <span className="inline-block w-full py-1 rounded-lg bg-blue-700 text-white text-[9px] font-bold">
+                      View All Verified Sellers
                     </span>
                   </div>
                 </div>

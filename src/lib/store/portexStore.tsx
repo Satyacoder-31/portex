@@ -121,16 +121,10 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
           document.documentElement.setAttribute('data-theme', 'light');
         }
       } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initial = prefersDark ? 'dark' : 'light';
-        setThemeState(initial);
-        if (initial === 'dark') {
-          document.documentElement.classList.add('dark');
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.setAttribute('data-theme', 'light');
-        }
+        // Default is always light — ignore system dark preference
+        setThemeState('light');
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
       }
     } catch {
       // ignore
