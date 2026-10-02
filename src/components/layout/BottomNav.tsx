@@ -3,21 +3,47 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, Truck, MessageSquare, User } from 'lucide-react';
+import { Home, Compass, Truck, MessageSquare, User, PlusCircle, ShieldCheck } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { conversations } = usePortex();
+  const { conversations, userRole } = usePortex();
   const unreadCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
 
-  const navItems = [
+  let navItems = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'Market', href: '/marketplace', icon: Compass },
     { label: 'Deliver', href: '/deliver', icon: Truck, highlight: true },
     { label: 'Chat', href: '/chat', icon: MessageSquare, badge: unreadCount },
     { label: 'Account', href: '/dashboard', icon: User },
   ];
+
+  if (userRole === 'DRIVER') {
+    navItems = [
+      { label: 'Cockpit', href: '/', icon: Home },
+      { label: 'Radar Map', href: '/driver', icon: Compass },
+      { label: 'Duty Radar', href: '/driver', icon: Truck, highlight: true },
+      { label: 'Chat', href: '/chat', icon: MessageSquare, badge: unreadCount },
+      { label: 'Earnings', href: '/dashboard', icon: User },
+    ];
+  } else if (userRole === 'SELLER') {
+    navItems = [
+      { label: 'Studio', href: '/', icon: Home },
+      { label: 'Catalog', href: '/marketplace', icon: Compass },
+      { label: '+ Post Ad', href: '/sell', icon: PlusCircle, highlight: true },
+      { label: 'Inquiries', href: '/chat', icon: MessageSquare, badge: unreadCount },
+      { label: 'Payouts', href: '/dashboard', icon: User },
+    ];
+  } else if (userRole === 'ENTERPRISE') {
+    navItems = [
+      { label: 'Operations', href: '/', icon: Home },
+      { label: 'Freight', href: '/tracking', icon: Compass },
+      { label: 'Dispatch', href: '/deliver', icon: Truck, highlight: true },
+      { label: 'Logistics', href: '/chat', icon: MessageSquare, badge: unreadCount },
+      { label: 'B2B Taxes', href: '/dashboard', icon: User },
+    ];
+  }
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-2xl border-t border-slate-200/80 dark:border-slate-800/80 px-3 py-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl">

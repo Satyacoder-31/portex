@@ -24,9 +24,15 @@ import {
 import { usePortex } from '@/lib/store/portexStore';
 import { VEHICLE_OPTIONS } from '@/lib/data/mockData';
 import ListingCard from '@/components/marketplace/ListingCard';
+import {
+  PersonaSwitcherBar,
+  DriverHomeView,
+  EnterpriseHomeView,
+  SellerHomeView,
+} from '@/components/home/PersonaRoleViews';
 
 export default function HomePage() {
-  const { listings, showToast } = usePortex();
+  const { listings, showToast, userRole } = usePortex();
   const [isVerifiedUnlocked, setIsVerifiedUnlocked] = useState(false);
 
   // Exact 10 Categories matching the user's reference screenshot (2 rows x 5 items)
@@ -113,8 +119,20 @@ export default function HomePage() {
     <div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-6 sm:space-y-8">
         
+        {/* Dynamic Persona Role Bar & Custom Views */}
+        <PersonaSwitcherBar />
+
+        {/* 1. DRIVER PARTNER VIEW */}
+        {userRole === 'DRIVER' && <DriverHomeView />}
+
+        {/* 2. ENTERPRISE LOGISTICS SHIPPER VIEW */}
+        {userRole === 'ENTERPRISE' && <EnterpriseHomeView />}
+
+        {/* 3. MARKETPLACE SELLER VIEW */}
+        {userRole === 'SELLER' && <SellerHomeView />}
+
         {/* ========================================================
-            1. HERO SECTION (Exact Royal Blue Promotional Banner)
+            4. CONSUMER / BUYER HERO & MARKETPLACE SECTION
            ======================================================== */}
         <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#003884] via-[#004dc7] to-[#1e50ff] text-white p-3 sm:p-5 shadow-lg shadow-blue-900/15">
           {/* Subtle Ambient Glows */}
