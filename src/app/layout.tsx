@@ -8,6 +8,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import DriverIncomingModal from '@/components/driver/DriverIncomingModal';
 import ToastNotification from '@/components/common/ToastNotification';
 import AuthModal from '@/components/auth/AuthModal';
+import GoogleAccountChooserModal from '@/components/auth/GoogleAccountChooserModal';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -62,6 +63,7 @@ export default function RootLayout({
           <DriverIncomingModal />
           <ToastNotification />
           <AuthModal />
+          <GoogleAccountChooserModal />
         </PortexProvider>
       </body>
     </html>

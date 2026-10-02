@@ -24,11 +24,12 @@ import {
 import { usePortex } from '@/lib/store/portexStore';
 import { User, UserIntent, DeliveryVehicleType, UserRole } from '@/types';
 import { DEMO_USERS } from '@/lib/data/mockData';
+import { GoogleLogo } from '@/components/auth/GoogleAccountChooserModal';
 import confetti from 'canvas-confetti';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { loginUser, currentUser } = usePortex();
+  const { loginUser, currentUser, openGoogleChooser, googleAccounts } = usePortex();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [selectedIntent, setSelectedIntent] = useState<UserIntent>('ALL_IN_ONE');
@@ -342,7 +343,64 @@ export default function LoginPage() {
 
             {/* TAB 1: LOGIN */}
             {activeTab === 'login' && (
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <div className="space-y-4">
+                {/* Primary Google Login Button */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <GoogleLogo className="w-3.5 h-3.5" />
+                      Google Single Sign-On (Free &amp; 1-Click)
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      Zero Carrier SMS Cost
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={openGoogleChooser}
+                    className="w-full py-3 px-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-white font-black text-xs rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 shadow-sm flex items-center justify-between transition-all hover:scale-[1.01] cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <GoogleLogo className="w-5 h-5" />
+                      <span className="text-left">
+                        Continue with Google
+                        <span className="block text-[10px] text-slate-400 font-medium">
+                          Choose from {googleAccounts.length} saved accounts or add new
+                        </span>
+                      </span>
+                    </div>
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </button>
+
+                  {/* Active Google Account Indicator */}
+                  {currentUser?.email && (
+                    <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        Signed in as <strong className="text-slate-800 dark:text-slate-200">{currentUser.name}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={openGoogleChooser}
+                        className="text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
+                      >
+                        Switch Account &rarr;
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative flex items-center justify-center py-1">
+                  <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+                  <span className="bg-white dark:bg-slate-900 px-3 text-[10px] font-black uppercase tracking-wider text-slate-400 absolute">
+                    or continue with phone &amp; otp
+                  </span>
+                </div>
+
+                <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Registered Mobile Number or Email
@@ -408,11 +466,39 @@ export default function LoginPage() {
                   )}
                 </button>
               </form>
-            )}
+            </div>
+          )}
 
             {/* TAB 2: REGISTER */}
             {activeTab === 'register' && (
-              <form onSubmit={handleRegisterSubmit} className="space-y-6">
+              <div className="space-y-6">
+                {/* 1-Click Google Onboarding Option */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800/80 dark:to-slate-800/50 rounded-2xl border border-blue-200/80 dark:border-slate-700 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      Skip Manual Form &amp; Onboard with Google
+                    </span>
+                    <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300">Instant Access</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openGoogleChooser}
+                    className="w-full py-2.5 px-4 bg-white dark:bg-slate-900 hover:bg-blue-50/50 dark:hover:bg-slate-850 text-slate-800 dark:text-white font-black text-xs rounded-xl border border-blue-300 dark:border-slate-700 shadow-sm flex items-center justify-center gap-2.5 transition-all hover:scale-[1.01] cursor-pointer"
+                  >
+                    <GoogleLogo className="w-4 h-4" />
+                    <span>Select or Create Google Profile (1-Click)</span>
+                  </button>
+                </div>
+
+                <div className="relative flex items-center justify-center">
+                  <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+                  <span className="bg-white dark:bg-slate-900 px-3 text-[10px] font-black uppercase tracking-wider text-slate-400 absolute">
+                    or fill out manual registration details
+                  </span>
+                </div>
+
+                <form onSubmit={handleRegisterSubmit} className="space-y-6">
 
                 {/* Intent Selector */}
                 <div>
@@ -832,7 +918,8 @@ export default function LoginPage() {
                   <span>Register &amp; Launch PORTEX Workspace</span>
                 </button>
               </form>
-            )}
+            </div>
+          )}
 
           </div>
         </div>

@@ -19,6 +19,7 @@ import {
   INITIAL_MESSAGES,
   INITIAL_BUSINESS_PROFILE,
   CURRENT_USER,
+  INITIAL_GOOGLE_ACCOUNTS,
 } from '@/lib/data/mockData';
 
 interface IncomingJobRequest {
@@ -95,6 +96,16 @@ interface PortexStoreContextType {
   logoutUser: () => void;
   updateUserProfile: (updates: Partial<User>) => void;
 
+  // Google Multi-Account Management
+  googleAccounts: User[];
+  isGoogleChooserOpen: boolean;
+  setIsGoogleChooserOpen: (open: boolean) => void;
+  openGoogleChooser: () => void;
+  closeGoogleChooser: () => void;
+  switchGoogleAccount: (accountId: string) => void;
+  addAndLoginGoogleAccount: (accountData: Partial<User>) => void;
+  removeGoogleAccount: (accountId: string) => void;
+
   // Enterprise Admin / Business Profile
   businessProfile: BusinessProfile;
   updateBusinessProfile: (profile: Partial<BusinessProfile>) => void;
@@ -125,7 +136,11 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
   const [authInitialIntent, setAuthInitialIntent] = useState<'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE'>('ALL_IN_ONE');
 
-  // Restore saved user from localStorage
+  // Google Multi-Account State
+  const [googleAccounts, setGoogleAccounts] = useState<User[]>(INITIAL_GOOGLE_ACCOUNTS);
+  const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState<boolean>(false);
+
+  // Restore saved user & google accounts from localStorage
   useEffect(() => {
     try {
       const savedUserStr = localStorage.getItem('portex-current-user');
@@ -134,6 +149,14 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         if (parsed && parsed.id) {
           setCurrentUser(parsed);
           if (parsed.role) setUserRole(parsed.role);
+        }
+      }
+
+      const savedAccountsStr = localStorage.getItem('portex-google-accounts');
+      if (savedAccountsStr) {
+        const parsedAccounts = JSON.parse(savedAccountsStr);
+        if (Array.isArray(parsedAccounts) && parsedAccounts.length > 0) {
+          setGoogleAccounts(parsedAccounts);
         }
       }
     } catch {
@@ -154,6 +177,9 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   };
 
+  const openGoogleChooser = () => setIsGoogleChooserOpen(true);
+  const closeGoogleChooser = () => setIsGoogleChooserOpen(false);
+
   const loginUser = (user: User) => {
     setCurrentUser(user);
     if (user.role) setUserRole(user.role);
@@ -163,7 +189,97 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
     setIsAuthModalOpen(false);
+    setIsGoogleChooserOpen(false);
     showToast(`Welcome back, ${user.name}! Logged in successfully.`);
+  };
+
+  const switchGoogleAccount = (accountId: string) => {
+    const targetAccount = googleAccounts.find(a => a.id === accountId);
+    if (targetAccount) {
+      setCurrentUser(targetAccount);
+      if (targetAccount.role) setUserRole(targetAccount.role);
+      try {
+        localStorage.setItem('portex-current-user', JSON.stringify(targetAccount));
+      } catch {
+        // ignore
+      }
+      setIsGoogleChooserOpen(false);
+      setIsAuthModalOpen(false);
+      showToast(`Switched Google account to ${targetAccount.name}`);
+    }
+  };
+
+  const addAndLoginGoogleAccount = (accountData: Partial<User>) => {
+    const email = accountData.email || 'user@gmail.com';
+    const cleanEmailKey = email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const newId = accountData.id || `usr_google_${cleanEmailKey}`;
+    const name = accountData.name || email.split('@')[0] || 'Google User';
+
+    const newAccount: User = {
+      id: newId,
+      name,
+      email,
+      phone: accountData.phone || '+91 98765 00000',
+      role: accountData.role || 'BUYER',
+      avatar: accountData.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80`,
+      city: accountData.city || 'Lucknow',
+      isVerified: true,
+      rating: 5.0,
+      totalDeals: 1,
+      userIntent: accountData.userIntent || 'ALL_IN_ONE',
+      porterProfile: accountData.porterProfile || {
+        userType: 'INDIVIDUAL',
+        defaultPickupAddress: 'Gomti Nagar, Lucknow, UP',
+        pickupPincode: '226010',
+        preferredVehicle: 'TATA_ACE_MINI_TRUCK',
+        needHelper: true,
+      },
+      marketplaceProfile: accountData.marketplaceProfile || {
+        canSell: true,
+        canBuy: true,
+        sellerType: 'INDIVIDUAL',
+        shopOrDisplayName: `${name}'s Store`,
+        payoutUpiId: `${email.split('@')[0]}@okhdfcbank`,
+        sellerPickupAddress: 'Gomti Nagar, Lucknow, UP',
+        sellerPickupPincode: '226010',
+        buyerDeliveryAddress: 'Gomti Nagar, Lucknow, UP',
+        deliveryPincode: '226010',
+        preferredPayment: 'UPI',
+        kycVerified: true,
+      },
+    };
+
+    setGoogleAccounts(prev => {
+      const existingIdx = prev.findIndex(a => a.email.toLowerCase() === email.toLowerCase());
+      let updated: User[];
+      if (existingIdx >= 0) {
+        updated = [...prev];
+        updated[existingIdx] = { ...updated[existingIdx], ...newAccount };
+      } else {
+        updated = [newAccount, ...prev];
+      }
+      try {
+        localStorage.setItem('portex-google-accounts', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    loginUser(newAccount);
+  };
+
+  const removeGoogleAccount = (accountId: string) => {
+    setGoogleAccounts(prev => {
+      const filtered = prev.filter(a => a.id !== accountId);
+      try {
+        localStorage.setItem('portex-google-accounts', JSON.stringify(filtered));
+      } catch {
+        // ignore
+      }
+      return filtered;
+    });
+    showToast('Removed account from device');
   };
 
   const logoutUser = () => {
@@ -594,6 +710,14 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         loginUser,
         logoutUser,
         updateUserProfile,
+        googleAccounts,
+        isGoogleChooserOpen,
+        setIsGoogleChooserOpen,
+        openGoogleChooser,
+        closeGoogleChooser,
+        switchGoogleAccount,
+        addAndLoginGoogleAccount,
+        removeGoogleAccount,
       }}
     >
       {children}

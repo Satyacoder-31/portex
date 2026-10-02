@@ -27,6 +27,7 @@ import {
 import { usePortex } from '@/lib/store/portexStore';
 import { User, UserIntent, DeliveryVehicleType, UserRole } from '@/types';
 import { DEMO_USERS } from '@/lib/data/mockData';
+import { GoogleLogo } from '@/components/auth/GoogleAccountChooserModal';
 import confetti from 'canvas-confetti';
 
 interface AuthModalProps {
@@ -50,6 +51,8 @@ export default function AuthModal({
     authInitialIntent,
     loginUser,
     currentUser,
+    openGoogleChooser,
+    googleAccounts,
   } = usePortex();
 
   const showModal = isOpen !== undefined ? isOpen : isAuthModalOpen;
@@ -333,7 +336,38 @@ export default function AuthModal({
 
           {/* TAB 1: LOGIN FLOW */}
           {activeTab === 'login' && (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div className="space-y-4">
+              {/* Google Sign In Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  openGoogleChooser();
+                }}
+                className="w-full py-3 px-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-800 dark:text-white font-bold text-xs rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 shadow-sm flex items-center justify-between transition-all hover:scale-[1.01] cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <GoogleLogo className="w-5 h-5" />
+                  <div className="text-left">
+                    <span className="block font-black text-xs">Continue with Google</span>
+                    <span className="block text-[10px] text-slate-400 font-normal">
+                      1-click free login &bull; {googleAccounts.length} saved accounts
+                    </span>
+                  </div>
+                </div>
+                <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </button>
+
+              <div className="relative flex items-center justify-center py-1">
+                <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+                <span className="bg-white dark:bg-slate-900 px-3 text-[10px] font-black uppercase tracking-wider text-slate-400 absolute">
+                  or with mobile &amp; otp
+                </span>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Mobile Number or Email
@@ -413,7 +447,8 @@ export default function AuthModal({
                 </button>
               </div>
             </form>
-          )}
+          </div>
+        )}
 
           {/* TAB 2: REGISTRATION / ONBOARDING FLOW */}
           {activeTab === 'register' && (
