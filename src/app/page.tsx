@@ -133,9 +133,12 @@ export default function HomePage() {
 
         {/* ========================================================
             4. CONSUMER / BUYER HERO & MARKETPLACE SECTION
+            Only displayed for BUYER role or unauthenticated shoppers
            ======================================================== */}
-        <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#003884] via-[#004dc7] to-[#1e50ff] text-white p-3 sm:p-5 shadow-lg shadow-blue-900/15">
-          {/* Subtle Ambient Glows */}
+        {(!userRole || userRole === 'BUYER') && (
+          <>
+            <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#003884] via-[#004dc7] to-[#1e50ff] text-white p-3 sm:p-5 shadow-lg shadow-blue-900/15">
+              {/* Subtle Ambient Glows */}
           <div className="absolute top-0 right-0 w-72 h-72 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-blue-400/20 rounded-full blur-2xl pointer-events-none" />
 
@@ -459,6 +462,8 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+      </>
+    )}
 
       </div>
     </div>

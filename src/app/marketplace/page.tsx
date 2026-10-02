@@ -13,6 +13,7 @@ import {
   X,
   ChevronDown,
   ArrowUpDown,
+  Zap,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { CATEGORIES } from '@/lib/data/mockData';
@@ -24,7 +25,7 @@ function MarketplaceContent() {
   const initialCat = searchParams.get('cat') || 'all';
   const initialQuery = searchParams.get('q') || '';
 
-  const { listings } = usePortex();
+  const { listings, userRole } = usePortex();
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCat);
@@ -78,6 +79,50 @@ function MarketplaceContent() {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      {/* Role Alert Banners (Guidance for non-buyer roles) */}
+      {userRole === 'DRIVER' && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Zap className="w-5 h-5 text-amber-500 flex-shrink-0" />
+            <div>
+              <h4 className="text-xs font-black text-amber-900 dark:text-amber-300">
+                You are currently in Driver Partner (Pilot) Mode
+              </h4>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                Driver pilots manage logistical bookings, cargo deliveries and trip earnings, not consumer shopping.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/driver"
+            className="py-2 px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-sm self-start sm:self-auto flex-shrink-0 transition-colors"
+          >
+            Go to Pilot Cockpit &rarr;
+          </Link>
+        </div>
+      )}
+
+      {userRole === 'ENTERPRISE' && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Truck className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <div>
+              <h4 className="text-xs font-black text-emerald-900 dark:text-emerald-300">
+                You are currently in B2B Enterprise Shipper Mode
+              </h4>
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                Enterprise accounts manage commercial fleet dispatches, warehouse hubs &amp; 18% GST tax invoices.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/deliver"
+            className="py-2 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-sm self-start sm:self-auto flex-shrink-0 transition-colors"
+          >
+            Go to Fleet Dispatcher &rarr;
+          </Link>
+        </div>
+      )}
       {/* Top Banner / Heading */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>

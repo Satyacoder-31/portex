@@ -28,6 +28,9 @@ import {
   Sun,
   Moon,
   Banknote,
+  Navigation,
+  ShoppingBag,
+  FileText,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { UserRole } from '@/types';
@@ -105,10 +108,32 @@ export default function Navbar() {
     }
   };
 
+  const getSearchPlaceholder = (role: UserRole) => {
+    switch (role) {
+      case 'DRIVER':
+        return 'Search Trip ID, Pickup Location, Hub or Dispatch...';
+      case 'ENTERPRISE':
+        return 'Search Consignment, E-Way Bill, Dock or Fleet Driver...';
+      case 'SELLER':
+        return 'Search Your Listings, Buyer Inquiries, SKU...';
+      case 'BUYER':
+      default:
+        return 'Search MacBook, Royal Enfield, Sofa, Porter Truck...';
+    }
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/marketplace?q=${encodeURIComponent(searchQuery.trim())}`);
+      if (userRole === 'DRIVER') {
+        router.push(`/dashboard?tab=trips&q=${encodeURIComponent(searchQuery.trim())}`);
+      } else if (userRole === 'ENTERPRISE') {
+        router.push(`/tracking?q=${encodeURIComponent(searchQuery.trim())}`);
+      } else if (userRole === 'SELLER') {
+        router.push(`/dashboard?tab=listings&q=${encodeURIComponent(searchQuery.trim())}`);
+      } else {
+        router.push(`/marketplace?q=${encodeURIComponent(searchQuery.trim())}`);
+      }
       setMobileSearchOpen(false);
     }
   };
@@ -250,7 +275,7 @@ export default function Navbar() {
               <Search className="w-4 h-4 ml-3.5 text-slate-400 flex-shrink-0" />
               <input
                 type="text"
-                placeholder="Search MacBook, Royal Enfield, Sofa, Porter Truck..."
+                placeholder={getSearchPlaceholder(userRole)}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full py-2.5 px-3 bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
@@ -648,7 +673,7 @@ export default function Navbar() {
                 <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search laptops, sofas, trucks..."
+                  placeholder={getSearchPlaceholder(userRole)}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 rounded-xl text-xs border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
@@ -797,87 +822,231 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* Primary Mobile Action Buttons */}
-              <div className="space-y-2">
-                <Link
-                  href="/deliver"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full p-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-emerald-600/20 flex items-center justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <Truck className="w-4 h-4" /> Book Porter Delivery
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              {/* Primary Mobile Action Buttons & Navigation Links (Strictly Role Tailored) */}
+              {userRole === 'DRIVER' ? (
+                <>
+                  <div className="space-y-2">
+                    <Link
+                      href="/driver"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-extrabold text-xs rounded-2xl shadow-md shadow-amber-500/20 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Truck className="w-4 h-4" /> Open Pilot Cockpit
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
 
-                <Link
-                  href="/sell"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-blue-600/20 flex items-center justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <PlusCircle className="w-4 h-4" /> Post an Ad / Sell
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+                    <Link
+                      href="/dashboard?tab=earnings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-slate-900 text-white font-extrabold text-xs rounded-2xl border border-slate-800 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Banknote className="w-4 h-4 text-emerald-400" /> Pilot Wallet (₹1,840)
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
 
-              {/* Navigation Links */}
-              <div className="space-y-1 text-xs font-bold text-slate-700 dark:text-slate-200">
-                <Link
-                  href="/marketplace"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
-                >
-                  <Compass className="w-4 h-4 text-blue-500" /> Browse Marketplace
-                </Link>
+                  <div className="space-y-1 text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <Link
+                      href="/driver"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <Navigation className="w-4 h-4 text-amber-500" /> Live GPS Radar Map
+                    </Link>
+                    <Link
+                      href="/dashboard?tab=trips"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <Package className="w-4 h-4 text-emerald-500" /> Assigned Trips &amp; History
+                    </Link>
+                    <Link
+                      href="/dashboard?tab=vehicle"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-blue-500" /> Fleet Vehicle Specs &amp; RC
+                    </Link>
+                    <Link
+                      href="/chat"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4 text-purple-500" /> Driver SOS &amp; Support
+                    </Link>
+                  </div>
+                </>
+              ) : userRole === 'ENTERPRISE' ? (
+                <>
+                  <div className="space-y-2">
+                    <Link
+                      href="/deliver"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-emerald-600/20 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Truck className="w-4 h-4" /> + Dispatch Fleet Truck
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
 
-                <Link
-                  href="/tracking"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center justify-between transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-emerald-500" /> My Deliveries
-                  </span>
-                  {activeDeliveriesCount > 0 && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-                      {activeDeliveriesCount} Active
-                    </span>
-                  )}
-                </Link>
+                    <Link
+                      href="/dashboard?tab=invoices"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-slate-900 text-white font-extrabold text-xs rounded-2xl border border-slate-800 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-emerald-400" /> 18% GST Invoices &amp; ITC
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
 
-                <Link
-                  href="/chat"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center justify-between transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <MessageSquare className="w-4 h-4 text-blue-500" /> Messages &amp; Offers
-                  </span>
-                  {unreadMessagesCount > 0 && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500 text-white">
-                      {unreadMessagesCount}
-                    </span>
-                  )}
-                </Link>
+                  <div className="space-y-1 text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <Link
+                      href="/tracking"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <Compass className="w-4 h-4 text-emerald-500" /> Active Freight Consignments
+                    </Link>
+                    <Link
+                      href="/dashboard?tab=docks"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <Building2 className="w-4 h-4 text-blue-500" /> Warehouse Docks &amp; Hubs
+                    </Link>
+                    <Link
+                      href="/chat"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4 text-purple-500" /> Key Account Manager
+                    </Link>
+                  </div>
+                </>
+              ) : userRole === 'SELLER' ? (
+                <>
+                  <div className="space-y-2">
+                    <Link
+                      href="/sell"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-blue-600/20 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <PlusCircle className="w-4 h-4" /> + Post New Product
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
 
-                <Link
-                  href="/driver"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors text-amber-600 dark:text-amber-400"
-                >
-                  <Truck className="w-4 h-4" /> Driver Partner Hub
-                </Link>
+                    <Link
+                      href="/dashboard?tab=offers"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-extrabold text-xs rounded-2xl flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" /> Buyer Offers (2 Pending)
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
 
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors text-purple-600 dark:text-purple-400"
-                >
-                  <Building2 className="w-4 h-4" /> Enterprise Admin &amp; GST
-                </Link>
-              </div>
+                  <div className="space-y-1 text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <Link
+                      href="/dashboard?tab=listings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <ShoppingBag className="w-4 h-4 text-blue-500" /> Store Inventory Catalog
+                    </Link>
+                    <Link
+                      href="/deliver"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <Truck className="w-4 h-4 text-emerald-500" /> Call Porter for Sold Goods
+                    </Link>
+                    <Link
+                      href="/dashboard?tab=payouts"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <Banknote className="w-4 h-4 text-emerald-500" /> Escrow UPI Payouts
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Link
+                      href="/deliver"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-emerald-600/20 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Truck className="w-4 h-4" /> Book Porter Delivery
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+
+                    <Link
+                      href="/sell"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-blue-600/20 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <PlusCircle className="w-4 h-4" /> Post an Ad / Sell
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+
+                  <div className="space-y-1 text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <Link
+                      href="/marketplace"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors"
+                    >
+                      <Compass className="w-4 h-4 text-blue-500" /> Browse Marketplace
+                    </Link>
+
+                    <Link
+                      href="/tracking"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center justify-between transition-colors"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Package className="w-4 h-4 text-emerald-500" /> My Deliveries
+                      </span>
+                      {activeDeliveriesCount > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
+                          {activeDeliveriesCount} Active
+                        </span>
+                      )}
+                    </Link>
+
+                    <Link
+                      href="/chat"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center justify-between transition-colors"
+                    >
+                      <span className="flex items-center gap-3">
+                        <MessageSquare className="w-4 h-4 text-blue-500" /> Messages &amp; Offers
+                      </span>
+                      {unreadMessagesCount > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500 text-white">
+                          {unreadMessagesCount}
+                        </span>
+                      )}
+                    </Link>
+                  </div>
+                </>
+              )}
 
               {/* Install PWA Prompt inside mobile drawer */}
               <div className="pt-2">
