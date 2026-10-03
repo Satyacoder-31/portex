@@ -84,6 +84,8 @@ interface PortexStoreContextType {
   toggleTheme: () => void;
 
   // Authentication & Onboarding
+  isLoggedIn: boolean;
+  setIsLoggedIn: (logged: boolean) => void;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
   authModalTab: 'login' | 'register';
@@ -132,6 +134,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<'light' | 'dark'>('light');
 
   // Auth Modal & User state
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
   const [authInitialIntent, setAuthInitialIntent] = useState<'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE'>('ALL_IN_ONE');
@@ -143,6 +146,13 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   // Restore saved user & google accounts from localStorage
   useEffect(() => {
     try {
+      const savedLoggedIn = localStorage.getItem('portex-is-logged-in');
+      if (savedLoggedIn === 'false') {
+        setIsLoggedIn(false);
+      } else if (savedLoggedIn === 'true') {
+        setIsLoggedIn(true);
+      }
+
       const savedUserStr = localStorage.getItem('portex-current-user');
       if (savedUserStr) {
         const parsed = JSON.parse(savedUserStr);
@@ -183,7 +193,9 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const loginUser = (user: User) => {
     setCurrentUser(user);
     if (user.role) setUserRole(user.role);
+    setIsLoggedIn(true);
     try {
+      localStorage.setItem('portex-is-logged-in', 'true');
       localStorage.setItem('portex-current-user', JSON.stringify(user));
     } catch {
       // ignore
@@ -284,13 +296,15 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
 
   const logoutUser = () => {
     try {
+      localStorage.setItem('portex-is-logged-in', 'false');
       localStorage.removeItem('portex-current-user');
     } catch {
       // ignore
     }
+    setIsLoggedIn(false);
     setCurrentUser(CURRENT_USER);
     setUserRole('BUYER');
-    showToast('Logged out. Session cleared.');
+    showToast('Logged out. You have signed out successfully.');
   };
 
   const updateUserProfile = (updates: Partial<User>) => {
@@ -699,6 +713,8 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         theme,
         setTheme,
         toggleTheme,
+        isLoggedIn,
+        setIsLoggedIn,
         isAuthModalOpen,
         setIsAuthModalOpen,
         authModalTab,

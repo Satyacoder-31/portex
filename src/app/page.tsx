@@ -25,7 +25,6 @@ import { usePortex } from '@/lib/store/portexStore';
 import { VEHICLE_OPTIONS } from '@/lib/data/mockData';
 import ListingCard from '@/components/marketplace/ListingCard';
 import {
-  PersonaSwitcherBar,
   DriverHomeView,
   EnterpriseHomeView,
   SellerHomeView,
@@ -118,10 +117,6 @@ export default function HomePage() {
   return (
     <div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-6 sm:space-y-8">
-        
-        {/* Dynamic Persona Role Bar & Custom Views */}
-        <PersonaSwitcherBar />
-
         {/* 1. DRIVER PARTNER VIEW */}
         {userRole === 'DRIVER' && <DriverHomeView />}
 

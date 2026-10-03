@@ -30,7 +30,6 @@ import {
 import { usePortex } from '@/lib/store/portexStore';
 import ListingCard from '@/components/marketplace/ListingCard';
 import InvoiceModal from '@/components/common/InvoiceModal';
-import { PersonaSwitcherBar } from '@/components/home/PersonaRoleViews';
 import { DeliveryBooking, UserRole } from '@/types';
 import confetti from 'canvas-confetti';
 
@@ -118,11 +117,7 @@ export default function UserDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      
-      {/* 1. Global Persona Switcher Bar */}
-      <PersonaSwitcherBar />
-
-      {/* 2. Role-Adapted Profile Overview Header */}
+      {/* Role-Adapted Profile Overview Header */}
       <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="relative">

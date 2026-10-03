@@ -44,6 +44,7 @@ export default function Navbar() {
     userRole,
     setUserRole,
     currentUser,
+    isLoggedIn,
     deliveries,
     conversations,
     listings,
@@ -407,261 +408,161 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Profile & Role Switcher Menu */}
-            <div className="relative" ref={profileDropdownRef}>
-              <button
-                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="group flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-300/80 dark:border-slate-700 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                title={`Account: ${currentUser.name} (${roleMeta[userRole].title})`}
-                aria-label="Profile and account menu"
-              >
-                <div className="relative flex-shrink-0">
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
-                    }}
-                    className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 shadow-sm"
-                  />
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${roleMeta[userRole].color} absolute -bottom-0.5 -right-0.5 border-2 border-white dark:border-slate-900`}
-                  />
-                </div>
-
-                <div className="hidden sm:flex flex-col text-left leading-tight">
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[85px]">
-                    {currentUser.name.split(' ')[0]}
-                  </span>
-                  <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">
-                    {roleMeta[userRole].title}
-                  </span>
-                </div>
-
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-transform duration-200 hidden sm:block" />
-              </button>
-
-              {showProfileDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 animate-in fade-in slide-in-from-top-2">
-                  {/* User Profile Header */}
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl mb-2 flex items-center gap-3">
+            {/* Profile & Auth Menu */}
+            {!isLoggedIn ? (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <UserIcon className="w-4 h-4" />
+                  <span>Sign In</span>
+                </Link>
+                <Link
+                  href="/login?tab=register"
+                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all hover:scale-105"
+                >
+                  <span>Register</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="relative" ref={profileDropdownRef}>
+                <button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className="group flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-300/80 dark:border-slate-700 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  title={`Account: ${currentUser.name}`}
+                  aria-label="Profile and account menu"
+                >
+                  <div className="relative flex-shrink-0">
                     <img
                       src={currentUser.avatar}
                       alt={currentUser.name}
-                      className="w-10 h-10 rounded-xl object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
-                        {currentUser.name}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
-                      <span className="inline-block mt-0.5 text-[10px] font-bold px-2 py-0.2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        {roleMeta[userRole].title}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Porter & Marketplace Profile Status Badges */}
-                  {(currentUser.porterProfile || currentUser.marketplaceProfile) && (
-                    <div className="p-2 mb-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800 text-[10px] space-y-1">
-                      {currentUser.porterProfile && (
-                        <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-bold">
-                          <span className="flex items-center gap-1">
-                            <Truck className="w-3 h-3" /> Porter Shipper
-                          </span>
-                          <span className="text-[9px] bg-emerald-500/10 px-1.5 py-0.2 rounded">
-                            {currentUser.porterProfile.userType === 'BUSINESS' ? 'GST Business' : 'Personal'}
-                          </span>
-                        </div>
-                      )}
-                      {currentUser.marketplaceProfile?.payoutUpiId && (
-                        <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 font-bold">
-                          <span className="flex items-center gap-1">
-                            <Banknote className="w-3 h-3" /> UPI Linked
-                          </span>
-                          <span className="text-[9px] truncate max-w-[120px] font-mono text-slate-500">
-                            {currentUser.marketplaceProfile.payoutUpiId}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Google Multi-Account Switcher */}
-                  <div className="px-2.5 py-1 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span className="flex items-center gap-1.5">
-                      <GoogleLogo className="w-3 h-3" />
-                      Google Accounts ({googleAccounts.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowProfileDropdown(false);
-                        openGoogleChooser();
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
                       }}
-                      className="text-blue-600 dark:text-blue-400 hover:underline normal-case cursor-pointer font-bold"
-                    >
-                      Manage &rarr;
-                    </button>
-                  </div>
-                  <div className="space-y-1 mb-2 max-h-36 overflow-y-auto">
-                    {googleAccounts.map(acc => {
-                      const isCurrent = currentUser?.id === acc.id || currentUser?.email === acc.email;
-                      return (
-                        <button
-                          key={acc.id}
-                          onClick={() => {
-                            switchGoogleAccount(acc.id);
-                            setShowProfileDropdown(false);
-                          }}
-                          className={`w-full text-left p-1.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                            isCurrent
-                              ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold'
-                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0 pr-1">
-                            <img src={acc.avatar} alt={acc.name} className="w-6 h-6 rounded-full object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <div className="text-[11px] font-bold truncate leading-tight">{acc.name}</div>
-                              <div className="text-[9px] text-slate-400 truncate leading-none">{acc.email}</div>
-                            </div>
-                          </div>
-                          {isCurrent ? (
-                            <span className="text-[8px] font-black uppercase px-1 py-0.2 bg-emerald-500 text-white rounded">
-                              Active
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-semibold text-slate-400">Switch</span>
-                          )}
-                        </button>
-                      );
-                    })}
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 shadow-sm"
+                    />
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full ${roleMeta[userRole].color} absolute -bottom-0.5 -right-0.5 border-2 border-white dark:border-slate-900`}
+                    />
                   </div>
 
-                  {/* Switch Persona Section */}
-                  <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Switch Active Persona
+                  <div className="hidden sm:flex flex-col text-left leading-tight">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[85px]">
+                      {currentUser.name.split(' ')[0]}
+                    </span>
+                    <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                      {roleMeta[userRole].title}
+                    </span>
                   </div>
-                  <div className="space-y-1 mb-2">
-                    {(Object.keys(roleMeta) as UserRole[]).map(role => (
+
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-transform duration-200 hidden sm:block" />
+                </button>
+
+                {showProfileDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 animate-in fade-in slide-in-from-top-2">
+                    {/* User Profile Header */}
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl mb-2 flex items-center gap-3">
+                      <img
+                        src={currentUser.avatar}
+                        alt={currentUser.name}
+                        className="w-10 h-10 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                          {currentUser.name}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
+                        <span className="inline-block mt-0.5 text-[10px] font-bold px-2 py-0.2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                          {roleMeta[userRole].title}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4 text-blue-500" />
+                        <span>My Dashboard & Ads</span>
+                      </Link>
+                      <Link
+                        href="/tracking"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        <Package className="w-4 h-4 text-emerald-500" />
+                        <span>Live Shipments ({activeDeliveriesCount})</span>
+                      </Link>
+                      <Link
+                        href="/deliver"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        <Truck className="w-4 h-4 text-teal-500" />
+                        <span>Book Porter Delivery</span>
+                      </Link>
+                      <Link
+                        href="/sell"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        <PlusCircle className="w-4 h-4 text-indigo-500" />
+                        <span>Post a Free Ad</span>
+                      </Link>
+                      <Link
+                        href="/driver"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        <Navigation className="w-4 h-4 text-amber-500" />
+                        <span>Driver Partner Hub</span>
+                      </Link>
+                      <Link
+                        href="/admin"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        <Building2 className="w-4 h-4 text-purple-500" />
+                        <span>Admin & Business GST</span>
+                      </Link>
+
+                      {/* Theme Switcher inside Profile Menu */}
                       <button
-                        key={role}
+                        onClick={toggleTheme}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-colors border-t border-slate-100 dark:border-slate-800 mt-1 pt-2 cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          {theme === 'dark' ? (
+                            <Sun className="w-4 h-4 text-amber-400" />
+                          ) : (
+                            <Moon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                          )}
+                          <span>Theme</span>
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+                        </span>
+                      </button>
+
+                      {/* Log Out Button */}
+                      <button
                         onClick={() => {
-                          setUserRole(role);
+                          logoutUser();
                           setShowProfileDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                          userRole === role
-                            ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold'
-                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 transition-colors cursor-pointer border-t border-slate-100 dark:border-slate-800 mt-1 pt-2"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${roleMeta[role].color}`} />
-                          <span>{roleMeta[role].title}</span>
-                        </div>
-                        {userRole === role && <Check className="w-3.5 h-3.5" />}
+                        <X className="w-4 h-4" />
+                        <span>Sign Out</span>
                       </button>
-                    ))}
+                    </div>
                   </div>
-
-                  <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1 space-y-1">
-                    {/* Google Account Chooser Modal Button */}
-                    <button
-                      onClick={() => {
-                        setShowProfileDropdown(false);
-                        openGoogleChooser();
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors cursor-pointer"
-                    >
-                      <GoogleLogo className="w-4 h-4" />
-                      <span>Switch or Add Google Account</span>
-                    </button>
-
-                    {/* Log In / Switch Account Action Button */}
-                    <button
-                      onClick={() => {
-                        setShowProfileDropdown(false);
-                        openAuthModal('login');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-2 transition-colors cursor-pointer"
-                    >
-                      <UserIcon className="w-4 h-4 text-blue-500" />
-                      <span>Phone / Email Login</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowProfileDropdown(false);
-                        openAuthModal('register');
-                      }}
-                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors cursor-pointer"
-                    >
-                      <Truck className="w-4 h-4 text-emerald-500" />
-                      <span>Porter &amp; Seller Onboarding Form</span>
-                    </button>
-
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setShowProfileDropdown(false)}
-                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
-                    >
-                      <UserIcon className="w-4 h-4 text-blue-500" />
-                      <span>My Dashboard &amp; Ads</span>
-                    </Link>
-                    <Link
-                      href="/tracking"
-                      onClick={() => setShowProfileDropdown(false)}
-                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
-                    >
-                      <Package className="w-4 h-4 text-emerald-500" />
-                      <span>Live Shipments ({activeDeliveriesCount})</span>
-                    </Link>
-                    <Link
-                      href="/admin"
-                      onClick={() => setShowProfileDropdown(false)}
-                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
-                    >
-                      <Building2 className="w-4 h-4 text-purple-500" />
-                      <span>Admin &amp; Business GST</span>
-                    </Link>
-
-                    {/* Dark / Light Mode Switcher inside Profile Menu */}
-                    <button
-                      onClick={() => {
-                        toggleTheme();
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-colors border-t border-slate-100 dark:border-slate-800 mt-1 pt-2 cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        {theme === 'dark' ? (
-                          <Sun className="w-4 h-4 text-amber-400" />
-                        ) : (
-                          <Moon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                        )}
-                        <span>Theme: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        {theme === 'dark' ? '☀️ Switch Light' : '🌙 Switch Dark'}
-                      </span>
-                    </button>
-
-                    {/* Log Out Button */}
-                    <button
-                      onClick={() => {
-                        logoutUser();
-                        setShowProfileDropdown(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 transition-colors cursor-pointer"
-                    >
-                      <X className="w-4 h-4" />
-                      <span>Log Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -716,84 +617,72 @@ export default function Navbar() {
             {/* Drawer Body */}
             <div className="p-5 space-y-5 flex-1">
               {/* Prominent User Profile Card on Mobile Drawer */}
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/60 rounded-2xl border border-blue-200/80 dark:border-slate-700 flex items-center gap-3.5 hover:shadow-md transition-all"
-              >
-                <div className="relative flex-shrink-0">
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+              {/* Mobile Drawer Auth */}
+              {!isLoggedIn ? (
+                <div className="space-y-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-2xl shadow-md flex items-center justify-center gap-2"
+                  >
+                    <UserIcon className="w-4 h-4" />
+                    <span>Sign In to PORTEX</span>
+                  </Link>
+                  <Link
+                    href="/login?tab=register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2"
+                  >
+                    <span>Create Free Account</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/60 rounded-2xl border border-blue-200/80 dark:border-slate-700 flex items-center gap-3.5 hover:shadow-md transition-all"
+                  >
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={currentUser.avatar}
+                        alt={currentUser.name}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+                        }}
+                        className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-500 shadow-md"
+                      />
+                      <span
+                        className={`w-3 h-3 rounded-full ${roleMeta[userRole].color} absolute bottom-0 right-0 border-2 border-white dark:border-slate-900`}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                          {currentUser.name}
+                        </h4>
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
+                      <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
+                        {roleMeta[userRole].title} Mode
+                      </span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      logoutUser();
+                      setMobileMenuOpen(false);
                     }}
-                    className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-500 shadow-md"
-                  />
-                  <span
-                    className={`w-3 h-3 rounded-full ${roleMeta[userRole].color} absolute bottom-0 right-0 border-2 border-white dark:border-slate-900`}
-                  />
+                    className="w-full py-2.5 px-3 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-xl border border-rose-200 dark:border-rose-900/50 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
-                      {currentUser.name}
-                    </h4>
-                    <ShieldCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                  </div>
-                  <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
-                  <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
-                    {roleMeta[userRole].title} Mode
-                  </span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </Link>
-
-              {/* Mobile Drawer Auth & Account Switcher Button */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    openAuthModal('login');
-                  }}
-                  className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <UserIcon className="w-3.5 h-3.5" />
-                  <span>Log In / Switch</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    openAuthModal('register');
-                  }}
-                  className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Truck className="w-3.5 h-3.5" />
-                  <span>Porter / Seller Setup</span>
-                </button>
-              </div>
-
-              {/* Persona Switcher Pill */}
-              <div className="p-3.5 bg-slate-100 dark:bg-slate-800 rounded-2xl space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Active Mode
-                </span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {(['BUYER', 'SELLER', 'DRIVER', 'ADMIN'] as UserRole[]).map(r => (
-                    <button
-                      key={r}
-                      onClick={() => setUserRole(r)}
-                      className={`p-2 rounded-xl text-[11px] font-bold text-center transition-all ${
-                        userRole === r
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                      }`}
-                    >
-                      {roleMeta[r].badge}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* Theme Toggle in Mobile Drawer */}
               <div className="p-3.5 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-between border border-slate-200/80 dark:border-slate-700/60">
