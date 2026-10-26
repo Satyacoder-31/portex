@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">PORTEX</string>
+    <string name="app_url">https://portex-theta.vercel.app</string>
+    <string name="offline_title">Connection Unavailable</string>
+    <string name="offline_message">Unable to reach PORTEX servers. Please check your mobile data or Wi-Fi connection.</string>
+    <string name="retry">Retry Connection</string>
+    <string name="exit_toast">Press back again to exit PORTEX</string>
+    <string name="file_provider_authority">com.portex.app.fileprovider</string>
+</resources>
