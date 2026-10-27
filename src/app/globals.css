@@ -13,7 +13,42 @@
     --brand-dark-surface: #1e293b;
     --brand-dark-border: #334155;
   }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden !important;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+  }
+
+  /* Prevent horizontal stretch from unconstrained containers */
+  main,
+  header,
+  footer,
+  nav,
+  section {
+    max-width: 100vw;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
 }
+
 
 /* Custom modern scrollbars */
 ::-webkit-scrollbar {

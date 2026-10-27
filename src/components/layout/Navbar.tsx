@@ -160,7 +160,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 transition-all shadow-sm">
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 transition-all shadow-sm w-full max-w-full overflow-x-clip">
         {/* Top Micro Utility Bar (Desktop only) */}
         <div className="hidden lg:flex items-center justify-between text-[11px] py-1 px-4 sm:px-8 bg-slate-900 text-slate-300 border-b border-slate-800">
           <div className="flex items-center gap-3">
@@ -194,7 +194,7 @@ export default function Navbar() {
         </div>
 
         {/* Main Navbar Bar */}
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1 sm:gap-4 w-full max-w-full">
           {/* Left: Brand Logo & City Picker */}
           <div className="flex items-center gap-1.5 sm:gap-4">
             {/* Mobile Menu Button */}

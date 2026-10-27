@@ -92,6 +92,11 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView() {
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setVerticalScrollBarEnabled(true);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -101,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
         settings.setGeolocationEnabled(true);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
+        settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
+        settings.setTextZoom(100);
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
@@ -245,6 +252,27 @@ public class MainActivity extends AppCompatActivity {
                         .setDuration(300)
                         .withEndAction(() -> splashOverlay.setVisibility(View.GONE));
             }
+
+            // Strictly lock viewport and disable horizontal scrolling
+            String jsFix = "(function() {" +
+                    "  var meta = document.querySelector('meta[name=viewport]');" +
+                    "  if (!meta) {" +
+                    "    meta = document.createElement('meta');" +
+                    "    meta.name = 'viewport';" +
+                    "    document.head.appendChild(meta);" +
+                    "  }" +
+                    "  meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';" +
+                    "  document.documentElement.style.overflowX = 'hidden';" +
+                    "  document.documentElement.style.maxWidth = '100vw';" +
+                    "  document.documentElement.style.width = '100%';" +
+                    "  document.body.style.overflowX = 'hidden';" +
+                    "  document.body.style.maxWidth = '100vw';" +
+                    "  document.body.style.width = '100%';" +
+                    "  var style = document.createElement('style');" +
+                    "  style.innerHTML = 'html, body, main { overflow-x: hidden !important; max-width: 100vw !important; width: 100% !important; overscroll-behavior-x: none !important; touch-action: pan-y !important; }';" +
+                    "  document.head.appendChild(style);" +
+                    "})()";
+            view.evaluateJavascript(jsFix, null);
         }
 
         @Override

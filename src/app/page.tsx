@@ -115,8 +115,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-6 sm:space-y-8">
+    <div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200 w-full max-w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-6 sm:space-y-8 w-full max-w-full overflow-x-hidden">
         {/* 1. DRIVER PARTNER VIEW */}
         {userRole === 'DRIVER' && <DriverHomeView />}
 
@@ -205,7 +205,7 @@ export default function HomePage() {
             </div>
 
             {/* Right Content (Man pointing at Smartphone Mockup with Top 5 Verified Listings) */}
-            <div className="lg:col-span-5 flex items-center justify-center lg:justify-end gap-3">
+            <div className="lg:col-span-5 flex items-center justify-center lg:justify-end gap-3 max-w-full overflow-hidden sm:overflow-visible py-2">
               {/* Smiling Man Illustration / Photo */}
               <div className="hidden sm:block relative w-36 h-48 rounded-2xl overflow-hidden shadow-lg border-2 border-white/20 flex-shrink-0">
                 <img
@@ -230,9 +230,9 @@ export default function HomePage() {
                 </div>
 
                 {/* Top 5 Badge on Phone Screen */}
-                <div className="absolute -top-3 -right-3 z-10 w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 flex flex-col items-center justify-center font-black shadow-lg shadow-amber-500/40 border-2 border-white rotate-6">
+                <div className="absolute -top-2.5 right-0 sm:-right-3 z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 flex flex-col items-center justify-center font-black shadow-lg shadow-amber-500/40 border-2 border-white rotate-6">
                   <span className="text-[9px] uppercase leading-none">TOP</span>
-                  <span className="text-sm leading-tight">5★</span>
+                  <span className="text-xs sm:text-sm leading-tight">5★</span>
                 </div>
 
                 {/* Inner Screen Feed */}
@@ -306,7 +306,7 @@ export default function HomePage() {
         {/* ========================================================
             2. CATEGORIES GRID (Exact 2-Row Layout from Reference)
            ======================================================== */}
-        <section className="space-y-3">
+        <section className="space-y-3 w-full max-w-full overflow-hidden">
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
               Explore Categories
@@ -321,22 +321,22 @@ export default function HomePage() {
           </div>
 
           {/* Clean 5-column grid on desktop and tablet, mobile 5-col */}
-          <div className="grid grid-cols-5 gap-2 sm:gap-3.5">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-3.5 w-full max-w-full">
             {screenshotCategories.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
                   key={item.id}
                   href={item.slug === 'all' ? '/marketplace' : `/marketplace?cat=${item.slug}`}
-                  className="group flex flex-col items-center p-2 sm:p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-blue-500/50 hover:shadow-md transition-all text-center"
+                  className="group flex flex-col items-center p-1.5 sm:p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-blue-500/50 hover:shadow-md transition-all text-center w-full min-w-0 overflow-hidden"
                 >
                   {/* Category Rounded Icon Box */}
-                  <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-1.5 transition-transform duration-200 group-hover:scale-110 shadow-xs ${item.color}`}>
-                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />
+                  <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-1 transition-transform duration-200 group-hover:scale-110 shadow-xs flex-shrink-0 ${item.color}`}>
+                    <Icon className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2]" />
                   </div>
 
                   {/* Category Name */}
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+                  <span className="text-[9px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate w-full px-0.5">
                     {item.name}
                   </span>
                 </Link>
