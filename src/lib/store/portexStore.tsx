@@ -446,19 +446,45 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       createdAt: 'Just now',
       views: 1,
       likes: 0,
+      status: 'ACTIVE',
+      isFeatured: item.isFeatured ?? true,
     };
-    setListings(prev => [newListing, ...prev]);
-    showToast(`Listing "${newListing.title.slice(0, 24)}..." posted successfully!`);
+    setListings(prev => {
+      const updated = [newListing, ...prev];
+      try {
+        localStorage.setItem('portex_listings', JSON.stringify(updated));
+      } catch {
+        // ignore quota
+      }
+      return updated;
+    });
+    showToast(`🎉 "${newListing.title.slice(0, 26)}..." is now LIVE on Marketplace!`);
     return newListing;
   };
 
   const updateListing = (id: string, partial: Partial<Listing>) => {
-    setListings(prev => prev.map(l => (l.id === id ? { ...l, ...partial } : l)));
+    setListings(prev => {
+      const updated = prev.map(l => (l.id === id ? { ...l, ...partial } : l));
+      try {
+        localStorage.setItem('portex_listings', JSON.stringify(updated));
+      } catch {
+        // ignore quota
+      }
+      return updated;
+    });
   };
 
   const deleteListing = (id: string) => {
-    setListings(prev => prev.filter(l => l.id !== id));
-    showToast('Listing removed');
+    setListings(prev => {
+      const updated = prev.filter(l => l.id !== id);
+      try {
+        localStorage.setItem('portex_listings', JSON.stringify(updated));
+      } catch {
+        // ignore quota
+      }
+      return updated;
+    });
+    showToast('Listing removed from your catalog and buyer marketplace.');
   };
 
   const toggleFavorite = (listingId: string) => {

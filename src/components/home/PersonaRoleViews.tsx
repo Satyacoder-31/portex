@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Truck,
+  Trash2,
   Package,
   ShieldCheck,
   ShoppingBag,
@@ -1119,7 +1121,8 @@ export function EnterpriseHomeView() {
  * and 1-click Porter courier dispatch to ship sold goods to buyers.
  */
 export function SellerHomeView() {
-  const { listings, currentUser, showToast } = usePortex();
+  const router = useRouter();
+  const { listings, currentUser, showToast, setUserRole, deleteListing } = usePortex();
   const [hasAcceptedOffer1, setHasAcceptedOffer1] = useState(false);
   const [hasAcceptedOffer2, setHasAcceptedOffer2] = useState(false);
 
@@ -1136,16 +1139,16 @@ export function SellerHomeView() {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-black">Patel Curated Home &amp; Vintage Studio</h1>
+                <h1 className="text-xl font-black">{currentUser.marketplaceProfile?.shopOrDisplayName || 'Patel Curated Home & Vintage Studio'}</h1>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                   Verified Merchant Store
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  4.88 ⭐ (42 Deals)
+                  4.88 ⭐ ({currentUser.totalDeals || 42} Deals)
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                UPI Escrow Linked: <span className="font-mono text-emerald-400 font-bold">priyapatel@okaxis</span> &bull; 0% Platform Commission
+                UPI Escrow Linked: <span className="font-mono text-emerald-400 font-bold">{currentUser.marketplaceProfile?.payoutUpiId || 'priyapatel@okaxis'}</span> &bull; 0% Platform Commission
               </p>
             </div>
           </div>
@@ -1153,47 +1156,191 @@ export function SellerHomeView() {
           <div className="flex items-center gap-3">
             <Link
               href="/sell"
-              className="py-3 px-5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 text-white font-black text-xs rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all hover:scale-105"
+              className="py-3 px-5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 text-white font-black text-xs rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>+ Post New Product</span>
             </Link>
 
-            <Link
-              href="/dashboard?tab=listings"
-              className="py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/15 transition-colors"
+            <button
+              type="button"
+              onClick={() => {
+                setUserRole('BUYER');
+                router.push('/marketplace');
+                showToast('Switched to Buyer Marketplace');
+              }}
+              className="py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/15 transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              My Inventory ({myListings.length || 3})
-            </Link>
+              <Eye className="w-3.5 h-3.5" />
+              <span>View as Buyer</span>
+            </button>
           </div>
         </div>
 
         {/* Merchant Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/10">
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-            <span className="text-[10px] font-bold text-slate-300 uppercase block">Active Catalog</span>
-            <div className="text-lg font-black text-white mt-0.5">{myListings.length || 3} Listed</div>
-            <span className="text-[10px] text-emerald-400 font-semibold">All Active on Map</span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase block">Active Products</span>
+            <div className="text-lg font-black text-white mt-0.5">{myListings.length} Live</div>
+            <span className="text-[10px] text-emerald-400 font-semibold">Indexed on Buyer Site</span>
           </div>
 
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-            <span className="text-[10px] font-bold text-slate-300 uppercase block">Ad Impressions</span>
-            <div className="text-lg font-black text-blue-400 mt-0.5">412 Views</div>
-            <span className="text-[10px] text-slate-400 font-semibold">High Search Demand</span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase block">Product Views</span>
+            <div className="text-lg font-black text-blue-400 mt-0.5">
+              {myListings.reduce((acc, l) => acc + (l.views || 0), 0) || 780} Views
+            </div>
+            <span className="text-[10px] text-slate-400 font-semibold">Active Inquiries</span>
           </div>
 
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
             <span className="text-[10px] font-bold text-slate-300 uppercase block">Escrow Balance</span>
             <div className="text-lg font-black text-emerald-400 mt-0.5">₹24,500.00</div>
-            <span className="text-[10px] text-slate-400 font-semibold">Auto-credited on delivery</span>
+            <span className="text-[10px] text-slate-400 font-semibold">Auto-released on delivery</span>
           </div>
 
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
             <span className="text-[10px] font-bold text-slate-300 uppercase block">Buyer Negotiations</span>
             <div className="text-lg font-black text-amber-400 mt-0.5">2 Pending</div>
-            <span className="text-[10px] text-amber-300 font-semibold">Needs response</span>
+            <span className="text-[10px] text-amber-300 font-semibold">Review offers below</span>
           </div>
         </div>
+      </div>
+
+      {/* 🛒 ACTIVE STORE INVENTORY (Live on Buyer Site) */}
+      <div className="p-5 sm:p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-indigo-600" />
+              <h2 className="text-base font-black text-slate-900 dark:text-white">
+                Your Store Catalog (Live for Buyers)
+              </h2>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                {myListings.length} Active Products
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Every product listed below is active and can be browsed, negotiated, or delivered to buyers across Lucknow.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setUserRole('BUYER');
+                router.push('/marketplace');
+                showToast('Switched to Buyer Marketplace view');
+              }}
+              className="py-2 px-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Preview on Buyer Site</span>
+            </button>
+
+            <Link
+              href="/sell"
+              className="py-2 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white text-xs font-extrabold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>+ Add Product</span>
+            </Link>
+          </div>
+        </div>
+
+        {myListings.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {myListings.map(item => (
+              <div
+                key={item.id}
+                className="group p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:border-blue-500/50 hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 mb-2.5">
+                  <img
+                    src={item.images[0] || 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80'}
+                    alt={item.title}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-2 left-2 flex items-center gap-1">
+                    <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                      LIVE ON BUYER SITE
+                    </span>
+                  </div>
+                  <div className="absolute bottom-1.5 right-1.5 bg-black/70 backdrop-blur-sm text-slate-200 text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                    {item.images.length} Photo{item.images.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                      {item.category} &bull; {item.condition.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-[10px] text-slate-400">{item.createdAt}</span>
+                  </div>
+                  <h4 className="font-extrabold text-xs text-slate-900 dark:text-white line-clamp-1">
+                    {item.title}
+                  </h4>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-base font-black text-blue-600 dark:text-blue-400">
+                      ₹{item.price.toLocaleString('en-IN')}
+                    </span>
+                    {item.originalPrice && (
+                      <span className="text-[10px] text-slate-400 line-through">
+                        ₹{item.originalPrice.toLocaleString('en-IN')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-3 mt-3 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
+                  <Link
+                    href={`/listings/${item.id}`}
+                    className="flex-1 py-1.5 text-center text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-xs flex items-center justify-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View as Buyer</span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteListing(item.id);
+                      showToast('Product removed from catalog and buyer site.');
+                    }}
+                    className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors cursor-pointer"
+                    title="Remove from Marketplace"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 space-y-3">
+            <ShoppingBag className="w-10 h-10 mx-auto text-slate-400" />
+            <div>
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                No active products posted yet
+              </h4>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Post your first product with photos, price, and dimensions to start receiving buyer offers.
+              </p>
+            </div>
+            <Link
+              href="/sell"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Post Your First Product</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Buyer Negotiations & Ready to Dispatch Grid */}
