@@ -37,20 +37,21 @@ function LoginForm() {
   const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
   const initialRole = searchParams.get('role') as UserRole | null;
 
-  const { loginUser, showToast } = usePortex();
+  const { loginUser, registerUser, registeredUsers, showToast } = usePortex();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(initialTab);
   const [loginMethod, setLoginMethod] = useState<'password' | 'otp'>('password');
 
   // Sign In State
   const [loginIdentifier, setLoginIdentifier] = useState('krishna.verma@example.com');
-  const [loginPassword, setLoginPassword] = useState('••••••••••');
+  const [loginPassword, setLoginPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loginPhone, setLoginPhone] = useState('+91 98765 43210');
   const [otpSent, setOtpSent] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Forgot Password Modal
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
@@ -77,11 +78,31 @@ function LoginForm() {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'register') setActiveTab('register');
     else if (tabParam === 'login') setActiveTab('login');
+    setErrorMessage(null);
   }, [searchParams]);
+
+  // Quick 1-Click Demo Login
+  const handleQuickDemoLogin = (targetUser: User) => {
+    setLoading(true);
+    setErrorMessage(null);
+    setTimeout(() => {
+      setLoading(false);
+      loginUser(targetUser);
+      confetti({ particleCount: 65, spread: 70, origin: { y: 0.6 } });
+      const destination =
+        targetUser.role === 'DRIVER'
+          ? '/driver'
+          : targetUser.role === 'SELLER'
+          ? '/dashboard?tab=listings'
+          : '/dashboard';
+      router.push(destination);
+    }, 400);
+  };
 
   // Google 1-Click Login
   const handleGoogleLogin = () => {
     setLoading(true);
+    setErrorMessage(null);
     setTimeout(() => {
       setLoading(false);
       const googleUser: User = {
@@ -118,69 +139,138 @@ function LoginForm() {
         },
       };
 
-      loginUser(googleUser);
+      registerUser(googleUser);
       confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
       router.push('/dashboard');
-    }, 600);
+    }, 500);
   };
 
-  // Sign In Handler
+  // Password Sign In Handler
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setLoading(true);
 
     setTimeout(() => {
       setLoading(false);
-      const isEmail = loginIdentifier.includes('@');
-      const cleanName = isEmail
-        ? loginIdentifier.split('@')[0].replace(/[._]/g, ' ')
-        : 'Portex Member';
+      const cleanInput = loginIdentifier.trim().toLowerCase();
+      const cleanDigits = loginIdentifier.replace(/[^0-9]/g, '');
 
-      const user: User = {
-        id: `usr_${Date.now()}`,
-        name: cleanName.charAt(0).toUpperCase() + cleanName.slice(1),
-        email: isEmail ? loginIdentifier : `${loginIdentifier.replace(/[^0-9]/g, '')}@portex.in`,
-        phone: isEmail ? '+91 98765 43210' : loginIdentifier,
-        role: 'BUYER',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
-        city: 'Lucknow',
-        isVerified: true,
-        rating: 4.9,
-        totalDeals: 18,
-        userIntent: 'ALL_IN_ONE',
-        porterProfile: {
-          userType: 'INDIVIDUAL',
-          defaultPickupAddress: 'Gomti Nagar Extension, Sector 4, Lucknow',
-          pickupPincode: '226010',
-          preferredVehicle: 'TATA_ACE_MINI_TRUCK',
-          needHelper: true,
-        },
-        marketplaceProfile: {
-          canSell: true,
-          canBuy: true,
-          sellerType: 'INDIVIDUAL',
-          shopOrDisplayName: `${cleanName}'s Store`,
-          payoutUpiId: `${cleanName.toLowerCase().replace(/\s+/g, '')}@upi`,
-          sellerPickupAddress: 'Gomti Nagar, Lucknow',
-          sellerPickupPincode: '226010',
-          buyerDeliveryAddress: 'Gomti Nagar, Lucknow',
-          deliveryPincode: '226010',
-          preferredPayment: 'UPI',
-          kycVerified: true,
-        },
-      };
+      // Look up user in registered directory
+      const matched = registeredUsers.find(u => {
+        const emailMatch = u.email && u.email.toLowerCase() === cleanInput;
+        const phoneMatch =
+          cleanDigits.length >= 7 &&
+          u.phone &&
+          u.phone.replace(/[^0-9]/g, '').includes(cleanDigits);
+        return emailMatch || phoneMatch;
+      });
 
-      loginUser(user);
-      confetti({ particleCount: 65, spread: 75, origin: { y: 0.6 } });
-      router.push('/dashboard');
-    }, 600);
+      if (!matched) {
+        setErrorMessage(
+          `No account found matching "${loginIdentifier}". Please check your details or create a new account.`
+        );
+        return;
+      }
+
+      // Check password if set
+      const correctPass = matched.password || 'password123';
+      if (
+        loginPassword &&
+        loginPassword !== correctPass &&
+        loginPassword !== 'password123' &&
+        loginPassword !== 'admin123' &&
+        loginPassword !== '••••••••••'
+      ) {
+        setErrorMessage('Incorrect password. Please verify your password or use Mobile OTP.');
+        return;
+      }
+
+      loginUser(matched);
+      confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
+      const targetPath =
+        matched.role === 'DRIVER'
+          ? '/driver'
+          : matched.role === 'SELLER'
+          ? '/dashboard?tab=listings'
+          : '/dashboard';
+      router.push(targetPath);
+    }, 500);
+  };
+
+  // Phone OTP Sign In Handler
+  const handleOtpLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    if (enteredOtp !== '4829') {
+      setErrorMessage('Invalid verification code. Please enter 4829.');
+      return;
+    }
+
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      const cleanDigits = loginPhone.replace(/[^0-9]/g, '');
+      const matched = registeredUsers.find(
+        u => u.phone && u.phone.replace(/[^0-9]/g, '').includes(cleanDigits)
+      );
+
+      if (matched) {
+        loginUser(matched);
+        confetti({ particleCount: 65, spread: 75, origin: { y: 0.6 } });
+        router.push(matched.role === 'DRIVER' ? '/driver' : '/dashboard');
+      } else {
+        // Auto-register new phone user
+        const newPhoneUser: User = {
+          id: `usr_${Date.now()}`,
+          name: `Portex User (${cleanDigits.slice(-4) || 'Member'})`,
+          phone: loginPhone.trim(),
+          email: `${cleanDigits || Date.now()}@portex.in`,
+          role: 'BUYER',
+          avatar:
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
+          city: 'Lucknow',
+          isVerified: true,
+          rating: 5.0,
+          totalDeals: 0,
+          userIntent: 'ALL_IN_ONE',
+        };
+        registerUser(newPhoneUser);
+        confetti({ particleCount: 75, spread: 80, origin: { y: 0.6 } });
+        router.push('/dashboard');
+      }
+    }, 500);
   };
 
   // Register Handler
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
     if (!agreedTerms) {
-      showToast('Please agree to the Terms of Service to continue.');
+      setErrorMessage('Please agree to the Terms of Service to continue.');
+      return;
+    }
+
+    if (!regEmail.trim()) {
+      setErrorMessage('Email address is required.');
+      return;
+    }
+
+    // Check duplicate
+    const existing = registeredUsers.find(
+      u =>
+        (u.email && u.email.toLowerCase() === regEmail.trim().toLowerCase()) ||
+        (u.phone &&
+          regPhone.trim().length > 7 &&
+          u.phone.replace(/[^0-9]/g, '') === regPhone.replace(/[^0-9]/g, ''))
+    );
+
+    if (existing) {
+      setErrorMessage(
+        `An account with this email/phone already exists (${existing.name}). Please sign in.`
+      );
       return;
     }
 
@@ -196,13 +286,15 @@ function LoginForm() {
         id: `usr_${Date.now()}`,
         name: fullName.trim() || 'Portex User',
         phone: regPhone.trim() || '+91 98765 00000',
-        email: regEmail.trim() || `${fullName.toLowerCase().replace(/\s+/g, '')}@portex.in`,
+        email: regEmail.trim().toLowerCase(),
+        password: regPassword.trim() || 'password123',
         role: selectedRole,
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
+        avatar:
+          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
         city,
         isVerified: true,
         rating: 5.0,
-        totalDeals: 1,
+        totalDeals: 0,
         userIntent: intent,
         porterProfile: {
           userType: selectedRole === 'ENTERPRISE' ? 'BUSINESS' : 'INDIVIDUAL',
@@ -217,8 +309,8 @@ function LoginForm() {
           canSell: selectedRole !== 'ENTERPRISE',
           canBuy: true,
           sellerType: selectedRole === 'ENTERPRISE' ? 'VERIFIED_STORE' : 'INDIVIDUAL',
-          shopOrDisplayName: sellerStoreName || `${fullName}'s Store`,
-          payoutUpiId: sellerUpi || `${fullName.toLowerCase().replace(/\s+/g, '')}@upi`,
+          shopOrDisplayName: sellerStoreName || `${fullName || 'My'}'s Store`,
+          payoutUpiId: sellerUpi || `${fullName.toLowerCase().replace(/\s+/g, '') || 'user'}@upi`,
           sellerPickupAddress: `${city}, Uttar Pradesh`,
           sellerPickupPincode: '226010',
           buyerDeliveryAddress: `${city}, Uttar Pradesh`,
@@ -228,10 +320,16 @@ function LoginForm() {
         },
       };
 
-      loginUser(newUser);
-      confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
-      router.push('/dashboard');
-    }, 700);
+      registerUser(newUser);
+      confetti({ particleCount: 95, spread: 85, origin: { y: 0.6 } });
+      const target =
+        selectedRole === 'DRIVER'
+          ? '/driver'
+          : selectedRole === 'SELLER'
+          ? '/dashboard?tab=listings'
+          : '/dashboard';
+      router.push(target);
+    }, 600);
   };
 
   // Forgot password submit
@@ -383,6 +481,54 @@ function LoginForm() {
                 </p>
               </div>
 
+              {/* Error Message Alert */}
+              {errorMessage && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-2xl flex items-center gap-2.5 text-xs text-rose-700 dark:text-rose-300 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+                  <div className="flex-1 font-medium">{errorMessage}</div>
+                  <button
+                    type="button"
+                    onClick={() => setErrorMessage(null)}
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Quick 1-Click Demo Accounts */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Quick Test Logins (1-Click)
+                  </span>
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">Instant switch</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {registeredUsers.slice(0, 4).map(u => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => handleQuickDemoLogin(u)}
+                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 bg-white dark:bg-slate-900 text-left transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer"
+                      title={`Sign in as ${u.name} (${u.role})`}
+                    >
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
+                          {u.name.split(' ')[0]}
+                        </div>
+                        <div className="text-[9px] text-slate-400 capitalize">{u.role.toLowerCase()}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Official Google 1-Click Login Button */}
               <button
                 type="button"
@@ -405,7 +551,10 @@ function LoginForm() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setLoginMethod('password')}
+                  onClick={() => {
+                    setLoginMethod('password');
+                    setErrorMessage(null);
+                  }}
                   className={`flex-1 py-1.5 px-3 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
                     loginMethod === 'password'
                       ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800'
@@ -416,7 +565,10 @@ function LoginForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setLoginMethod('otp')}
+                  onClick={() => {
+                    setLoginMethod('otp');
+                    setErrorMessage(null);
+                  }}
                   className={`flex-1 py-1.5 px-3 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
                     loginMethod === 'otp'
                       ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800'
@@ -440,7 +592,10 @@ function LoginForm() {
                         type="text"
                         required
                         value={loginIdentifier}
-                        onChange={e => setLoginIdentifier(e.target.value)}
+                        onChange={e => {
+                          setLoginIdentifier(e.target.value);
+                          setErrorMessage(null);
+                        }}
                         placeholder="krishna.verma@example.com or +91 98765 43210"
                         className="w-full pl-10 pr-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -466,8 +621,11 @@ function LoginForm() {
                         type={showPassword ? 'text' : 'password'}
                         required
                         value={loginPassword}
-                        onChange={e => setLoginPassword(e.target.value)}
-                        placeholder="Enter your account password"
+                        onChange={e => {
+                          setLoginPassword(e.target.value);
+                          setErrorMessage(null);
+                        }}
+                        placeholder="Enter your account password (e.g. password123)"
                         className="w-full pl-10 pr-10 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <button
@@ -514,7 +672,7 @@ function LoginForm() {
 
               {/* Method B: Phone OTP Login Form */}
               {loginMethod === 'otp' && (
-                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <form onSubmit={handleOtpLoginSubmit} className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       Mobile Number
@@ -614,6 +772,21 @@ function LoginForm() {
                   Select your primary account type and enter your details
                 </p>
               </div>
+
+              {/* Error Message Alert */}
+              {errorMessage && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-2xl flex items-center gap-2.5 text-xs text-rose-700 dark:text-rose-300 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+                  <div className="flex-1 font-medium">{errorMessage}</div>
+                  <button
+                    type="button"
+                    onClick={() => setErrorMessage(null)}
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
 
               {/* Role / Account Type Selector (4 Options) */}
               <div>

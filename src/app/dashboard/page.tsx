@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Package,
   Truck,
@@ -26,14 +27,34 @@ import {
   User as UserIcon,
   MessageSquare,
   AlertCircle,
+  Camera,
+  Upload,
+  LogOut,
+  Check,
+  Save,
+  X,
+  Building2,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import ListingCard from '@/components/marketplace/ListingCard';
 import InvoiceModal from '@/components/common/InvoiceModal';
-import { DeliveryBooking, UserRole } from '@/types';
+import { DeliveryBooking, UserRole, DeliveryVehicleType } from '@/types';
 import confetti from 'canvas-confetti';
+import { compressImageFile } from '@/lib/utils/imageUpload';
 
-export default function UserDashboardPage() {
+const PRESET_AVATARS = [
+  { label: 'Professional', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Tech Pro', url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Business Executive', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Creative Merchant', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Fleet Pilot', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Enterprise Lead', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80' },
+];
+
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
+
   const {
     currentUser,
     userRole,
@@ -45,27 +66,171 @@ export default function UserDashboardPage() {
     driverEarnings,
     isDriverOnline,
     setIsDriverOnline,
+    isLoggedIn,
+    logoutUser,
+    updateUserProfile,
     showToast,
   } = usePortex();
 
   // Selected tab state
-  const [activeTab, setActiveTab] = useState<string>('profile');
+  const [activeTab, setActiveTab] = useState<string>(urlTab || 'profile');
   const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<DeliveryBooking | null>(null);
   const [hasWithdrawn, setHasWithdrawn] = useState(false);
   const [hasAcceptedNegotiation, setHasAcceptedNegotiation] = useState(false);
 
-  // Set default tab on persona change
+  // Profile Editor state
+  const [name, setName] = useState(currentUser.name || '');
+  const [email, setEmail] = useState(currentUser.email || '');
+  const [phone, setPhone] = useState(currentUser.phone || '');
+  const [city, setCity] = useState(currentUser.city || 'Lucknow');
+  const [avatar, setAvatar] = useState(currentUser.avatar || '');
+  const [role, setRole] = useState<UserRole>(currentUser.role || userRole);
+  const [address, setAddress] = useState(
+    currentUser.porterProfile?.defaultPickupAddress ||
+    currentUser.marketplaceProfile?.sellerPickupAddress ||
+    'Gomti Nagar Extension, Sector 4, Lucknow, UP'
+  );
+  const [pincode, setPincode] = useState(
+    currentUser.porterProfile?.pickupPincode ||
+    currentUser.marketplaceProfile?.sellerPickupPincode ||
+    '226010'
+  );
+  const [shopName, setShopName] = useState(
+    currentUser.marketplaceProfile?.shopOrDisplayName || `${currentUser.name}'s Verified Deals`
+  );
+  const [upiId, setUpiId] = useState(
+    currentUser.marketplaceProfile?.payoutUpiId || 'user@okhdfcbank'
+  );
+  const [bankAcc, setBankAcc] = useState(
+    currentUser.marketplaceProfile?.bankAccountNumber || '912010045678912'
+  );
+  const [bankIfsc, setBankIfsc] = useState(
+    currentUser.marketplaceProfile?.bankIfsc || 'HDFC0001024'
+  );
+  const [businessName, setBusinessName] = useState(
+    currentUser.porterProfile?.businessName || 'Mango Tech Logistics'
+  );
+  const [gstin, setGstin] = useState(
+    currentUser.porterProfile?.gstin || '09ABRFM9138P1Z3'
+  );
+  const [vehicle, setVehicle] = useState<DeliveryVehicleType>(
+    currentUser.porterProfile?.preferredVehicle || 'TATA_ACE_MINI_TRUCK'
+  );
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
+
+  // Sync state when currentUser updates
   useEffect(() => {
-    if (userRole === 'DRIVER') {
-      setActiveTab('earnings');
-    } else if (userRole === 'SELLER') {
-      setActiveTab('listings');
-    } else if (userRole === 'ENTERPRISE') {
-      setActiveTab('invoices');
-    } else {
-      setActiveTab('deliveries');
+    setName(currentUser.name || '');
+    setEmail(currentUser.email || '');
+    setPhone(currentUser.phone || '');
+    setCity(currentUser.city || 'Lucknow');
+    setAvatar(currentUser.avatar || '');
+    setRole(currentUser.role || userRole);
+    if (currentUser.porterProfile?.defaultPickupAddress) {
+      setAddress(currentUser.porterProfile.defaultPickupAddress);
     }
-  }, [userRole]);
+    if (currentUser.porterProfile?.pickupPincode) {
+      setPincode(currentUser.porterProfile.pickupPincode);
+    }
+    if (currentUser.marketplaceProfile?.shopOrDisplayName) {
+      setShopName(currentUser.marketplaceProfile.shopOrDisplayName);
+    }
+    if (currentUser.marketplaceProfile?.payoutUpiId) {
+      setUpiId(currentUser.marketplaceProfile.payoutUpiId);
+    }
+    if (currentUser.porterProfile?.businessName) {
+      setBusinessName(currentUser.porterProfile.businessName);
+    }
+    if (currentUser.porterProfile?.gstin) {
+      setGstin(currentUser.porterProfile.gstin);
+    }
+  }, [currentUser, userRole]);
+
+  // Sync tab with URL
+  useEffect(() => {
+    if (urlTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
+
+  // Set default tab on persona change if no URL tab
+  useEffect(() => {
+    if (!urlTab) {
+      if (userRole === 'DRIVER') {
+        setActiveTab('earnings');
+      } else if (userRole === 'SELLER') {
+        setActiveTab('listings');
+      } else if (userRole === 'ENTERPRISE') {
+        setActiveTab('invoices');
+      } else {
+        setActiveTab('deliveries');
+      }
+    }
+  }, [userRole, urlTab]);
+
+  // Avatar Upload Handler
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const dataUrl = await compressImageFile(file, 400, 400, 0.85);
+      setAvatar(dataUrl);
+      showToast('Profile photo selected! Click Save Changes to commit.');
+    } catch {
+      showToast('Could not process photo. Please choose another image.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  // Profile Save Handler
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    setTimeout(() => {
+      setIsSaving(false);
+      updateUserProfile({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        city,
+        avatar,
+        role,
+        porterProfile: {
+          ...currentUser.porterProfile,
+          userType: role === 'ENTERPRISE' ? 'BUSINESS' : 'INDIVIDUAL',
+          businessName: businessName || undefined,
+          gstin: gstin || undefined,
+          defaultPickupAddress: address,
+          pickupPincode: pincode,
+          preferredVehicle: vehicle,
+          needHelper: true,
+        },
+        marketplaceProfile: {
+          ...currentUser.marketplaceProfile,
+          canSell: role !== 'ENTERPRISE',
+          canBuy: true,
+          sellerType: role === 'ENTERPRISE' ? 'VERIFIED_STORE' : 'INDIVIDUAL',
+          shopOrDisplayName: shopName || `${name}'s Store`,
+          payoutUpiId: upiId || `${name.toLowerCase().replace(/\s+/g, '')}@upi`,
+          bankAccountNumber: bankAcc || undefined,
+          bankIfsc: bankIfsc || undefined,
+          sellerPickupAddress: address,
+          sellerPickupPincode: pincode,
+          buyerDeliveryAddress: address,
+          deliveryPincode: pincode,
+          preferredPayment: 'UPI',
+          kycVerified: true,
+        },
+      });
+      confetti({ particleCount: 75, spread: 80, origin: { y: 0.6 } });
+    }, 450);
+  };
 
   const myListings = listings.filter(
     l => l.sellerId === currentUser.id || l.sellerName === currentUser.name
@@ -114,6 +279,35 @@ export default function UserDashboardPage() {
     confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
     showToast(`₹${driverEarnings.today} withdrawal requested! Transfer initiated to linked UPI.`);
   };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="max-w-md mx-auto my-16 p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 flex items-center justify-center mx-auto">
+          <UserIcon className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-black text-slate-900 dark:text-white">Sign In Required</h2>
+        <p className="text-xs text-slate-500">
+          You are currently signed out. Please sign in or create an account to view your PORTEX dashboard, manage active ads, or edit your profile.
+        </p>
+        <div className="pt-2 flex flex-col gap-2">
+          <Link
+            href="/login"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md shadow-blue-500/20"
+          >
+            <span>Sign In to Your Account</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/login?tab=register"
+            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl flex items-center justify-center"
+          >
+            Create New Free Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -263,6 +457,30 @@ export default function UserDashboardPage() {
               </Link>
             </>
           )}
+
+          {/* Universal Edit Profile & Sign Out Buttons */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'profile'
+                ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
+                : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5 text-purple-400" />
+            <span>Edit Profile</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => logoutUser()}
+            className="px-3 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold border border-rose-200 dark:border-rose-900/40 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Sign out of PORTEX and return to Login"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
         </div>
       </div>
 
@@ -718,37 +936,443 @@ export default function UserDashboardPage() {
       )}
 
       {activeTab === 'profile' && (
-        <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-              Profile &amp; Preferences
-            </h3>
-            <button
-              onClick={() => openAuthModal('register')}
-              className="py-1 px-3 text-xs font-bold text-blue-600 hover:underline"
-            >
-              Edit All Details &rarr;
-            </button>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-8 animate-in fade-in">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800 gap-4">
+            <div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-purple-600" />
+                <span>Account Profile &amp; Preferences</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Update your personal identity, contact details, operating persona, and UPI payout configurations.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => logoutUser()}
+                className="px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/50 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
-              <span className="text-slate-400 font-bold uppercase text-[10px] block">Full Name</span>
-              <span className="font-bold text-slate-900 dark:text-white">{currentUser.name}</span>
+          <form onSubmit={handleSaveProfile} className="space-y-8">
+            {/* 1. Avatar Customization Section */}
+            <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                    Profile Picture &amp; Avatar
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Visible on your seller profile, customer orders, and chat conversations.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                {/* Current Avatar with change button */}
+                <div className="relative group self-start sm:self-auto">
+                  <img
+                    src={avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'}
+                    alt={name}
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-blue-500 shadow-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => avatarFileRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute inset-0 bg-slate-950/60 text-white rounded-2xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[10px] font-bold transition-opacity cursor-pointer"
+                  >
+                    <Camera className="w-5 h-5 mb-0.5" />
+                    <span>Upload</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="file"
+                      ref={avatarFileRef}
+                      onChange={handleAvatarFile}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => avatarFileRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{uploadingAvatar ? 'Compressing...' : 'Upload from Device'}</span>
+                    </button>
+                    <span className="text-[11px] text-slate-400">or pick a curated preset:</span>
+                  </div>
+
+                  {/* Preset Avatars */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {PRESET_AVATARS.map((p, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setAvatar(p.url)}
+                        className={`group relative p-0.5 rounded-full border-2 transition-all cursor-pointer ${
+                          avatar === p.url ? 'border-blue-600 scale-110 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100'
+                        }`}
+                        title={p.label}
+                      >
+                        <img
+                          src={p.url}
+                          alt={p.label}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
-              <span className="text-slate-400 font-bold uppercase text-[10px] block">Email</span>
-              <span className="font-bold text-slate-900 dark:text-white">{currentUser.email}</span>
+
+            {/* 2. Personal Information Grid */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Personal Identity &amp; Contact
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Mobile Number (+91) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    City / Operational Hub *
+                  </label>
+                  <select
+                    value={city}
+                    onChange={e => setCity(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Lucknow">Lucknow (Central Hub)</option>
+                    <option value="Kanpur">Kanpur</option>
+                    <option value="Delhi NCR">Delhi NCR</option>
+                    <option value="Varanasi">Varanasi</option>
+                    <option value="Bengaluru">Bengaluru</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Kolkata">Kolkata</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
-              <span className="text-slate-400 font-bold uppercase text-[10px] block">Phone</span>
-              <span className="font-bold text-slate-900 dark:text-white">{currentUser.phone}</span>
+
+            {/* 3. Account Mode / Role Switcher */}
+            <div className="space-y-3">
+              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Primary Account Persona &amp; Operating Mode
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRole('BUYER')}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                    role === 'BUYER'
+                      ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-600/40 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <ShoppingBag className="w-4 h-4 text-blue-600" />
+                    {role === 'BUYER' && <CheckCircle2 className="w-4 h-4 text-blue-600" />}
+                  </div>
+                  <div className="font-extrabold text-xs text-slate-900 dark:text-white">Individual / Buyer</div>
+                  <div className="text-[10px] text-slate-500">Shop marketplace &amp; book couriers</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRole('SELLER')}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                    role === 'SELLER'
+                      ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 ring-2 ring-indigo-600/40 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Banknote className="w-4 h-4 text-indigo-600" />
+                    {role === 'SELLER' && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
+                  </div>
+                  <div className="font-extrabold text-xs text-slate-900 dark:text-white">Marketplace Seller</div>
+                  <div className="text-[10px] text-slate-500">Publish products &amp; UPI payouts</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRole('ENTERPRISE')}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                    role === 'ENTERPRISE'
+                      ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 ring-2 ring-emerald-600/40 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Truck className="w-4 h-4 text-emerald-600" />
+                    {role === 'ENTERPRISE' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                  </div>
+                  <div className="font-extrabold text-xs text-slate-900 dark:text-white">Business Shipper</div>
+                  <div className="text-[10px] text-slate-500">Fleet trucks &amp; 18% GST invoices</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRole('DRIVER')}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                    role === 'DRIVER'
+                      ? 'border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 ring-2 ring-amber-500/40 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    {role === 'DRIVER' && <CheckCircle2 className="w-4 h-4 text-amber-500" />}
+                  </div>
+                  <div className="font-extrabold text-xs text-slate-900 dark:text-white">Fleet Pilot Driver</div>
+                  <div className="text-[10px] text-slate-500">Accept delivery runs &amp; earn</div>
+                </button>
+              </div>
             </div>
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-0.5">
-              <span className="text-slate-400 font-bold uppercase text-[10px] block">City</span>
-              <span className="font-bold text-slate-900 dark:text-white">{currentUser.city}</span>
+
+            {/* 4. Pickup & Delivery Logistics Address */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Default Logistics &amp; Shipping Location
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Street Address / Locality
+                  </label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    placeholder="House/Plot, Street, Area name"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Pincode
+                  </label>
+                  <input
+                    type="text"
+                    value={pincode}
+                    onChange={e => setPincode(e.target.value)}
+                    placeholder="226010"
+                    maxLength={6}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+
+            {/* 5. Seller Payout Details (UPI & Store) */}
+            <div className="p-5 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-slate-800/60 dark:to-slate-800/40 rounded-2xl border border-indigo-200 dark:border-slate-700 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-950 dark:text-indigo-300">
+                    Seller Store &amp; Instant Payout Settings
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Buyers pay into escrow. When delivered, funds transfer automatically to this UPI ID.
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  Zero Commission P2P
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Store / Shop Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={shopName}
+                    onChange={e => setShopName(e.target.value)}
+                    placeholder="e.g. Ramesh Electronics &amp; Curated Tech"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Payout UPI ID (Instant Escrow Release) *
+                  </label>
+                  <input
+                    type="text"
+                    value={upiId}
+                    onChange={e => setUpiId(e.target.value)}
+                    placeholder="e.g. ramesh@okhdfcbank"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono font-bold text-blue-600 dark:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Bank Account Number (Backup)
+                  </label>
+                  <input
+                    type="text"
+                    value={bankAcc}
+                    onChange={e => setBankAcc(e.target.value)}
+                    placeholder="912010045678912"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Bank IFSC Code
+                  </label>
+                  <input
+                    type="text"
+                    value={bankIfsc}
+                    onChange={e => setBankIfsc(e.target.value)}
+                    placeholder="HDFC0001024"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Dynamic Enterprise or Driver Sections */}
+            {role === 'ENTERPRISE' && (
+              <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/30 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Company Legal Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={businessName}
+                    onChange={e => setBusinessName(e.target.value)}
+                    placeholder="e.g. Sharma Distribution Pvt Ltd"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    GSTIN Number (18% ITC Tax Credit)
+                  </label>
+                  <input
+                    type="text"
+                    value={gstin}
+                    onChange={e => setGstin(e.target.value)}
+                    placeholder="09AAECS1429B1Z2"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono uppercase"
+                  />
+                </div>
+              </div>
+            )}
+
+            {role === 'DRIVER' && (
+              <div className="p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl border border-amber-500/30 text-xs space-y-3">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Vehicle You Operate
+                </label>
+                <select
+                  value={vehicle}
+                  onChange={e => setVehicle(e.target.value as DeliveryVehicleType)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium"
+                >
+                  <option value="TATA_ACE_MINI_TRUCK">Tata Ace Mini Truck (Chota Hathi - 750kg)</option>
+                  <option value="TWO_WHEELER">2-Wheeler (Express Courier Bike)</option>
+                  <option value="THREE_WHEELER_AUTO">3-Wheeler Auto (500kg)</option>
+                  <option value="PICKUP_8FT">8ft Pickup Truck (1200kg)</option>
+                  <option value="TEMPO_CLOSED">Closed Container Tempo (1500kg)</option>
+                </select>
+              </div>
+            )}
+
+            {/* Bottom Actions Row */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-500/25 flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Saving Changes...' : 'Save Profile Changes'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setName(currentUser.name);
+                    setEmail(currentUser.email);
+                    setPhone(currentUser.phone);
+                    showToast('Profile reset to saved values');
+                  }}
+                  className="px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => logoutUser()}
+                className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-xl border border-rose-200 dark:border-rose-900/50 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out of Account</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -761,5 +1385,21 @@ export default function UserDashboardPage() {
       )}
 
     </div>
+  );
+}
+
+export default function UserDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-xs font-bold text-slate-400 animate-pulse">
+            Loading PORTEX Dashboard...
+          </div>
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

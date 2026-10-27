@@ -19,6 +19,7 @@ import {
   INITIAL_MESSAGES,
   INITIAL_BUSINESS_PROFILE,
   CURRENT_USER,
+  INITIAL_REGISTERED_USERS,
   INITIAL_GOOGLE_ACCOUNTS,
 } from '@/lib/data/mockData';
 
@@ -94,6 +95,8 @@ interface PortexStoreContextType {
   setAuthInitialIntent: (intent: 'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE') => void;
   openAuthModal: (tab?: 'login' | 'register', intent?: 'PORTER_PARCEL' | 'MARKETPLACE' | 'ALL_IN_ONE') => void;
   closeAuthModal: () => void;
+  registeredUsers: User[];
+  registerUser: (userData: User) => void;
   loginUser: (user: User) => void;
   logoutUser: () => void;
   updateUserProfile: (updates: Partial<User>) => void;
@@ -133,6 +136,9 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [theme, setThemeState] = useState<'light' | 'dark'>('light');
 
+  // Registered Users Directory (Persisted in localStorage)
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>(INITIAL_REGISTERED_USERS);
+
   // Auth Modal & User state
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -143,7 +149,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [googleAccounts, setGoogleAccounts] = useState<User[]>(INITIAL_GOOGLE_ACCOUNTS);
   const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState<boolean>(false);
 
-  // Restore saved user & google accounts from localStorage
+  // Restore saved user & registered accounts from localStorage
   useEffect(() => {
     try {
       const savedLoggedIn = localStorage.getItem('portex-is-logged-in');
@@ -151,6 +157,14 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         setIsLoggedIn(false);
       } else if (savedLoggedIn === 'true') {
         setIsLoggedIn(true);
+      }
+
+      const savedUsersStr = localStorage.getItem('portex-registered-users');
+      if (savedUsersStr) {
+        const parsedUsers = JSON.parse(savedUsersStr);
+        if (Array.isArray(parsedUsers) && parsedUsers.length > 0) {
+          setRegisteredUsers(parsedUsers);
+        }
       }
 
       const savedUserStr = localStorage.getItem('portex-current-user');
@@ -190,6 +204,30 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const openGoogleChooser = () => setIsGoogleChooserOpen(true);
   const closeGoogleChooser = () => setIsGoogleChooserOpen(false);
 
+  const registerUser = (userData: User) => {
+    setRegisteredUsers(prev => {
+      const existingIdx = prev.findIndex(
+        u => (u.email && u.email.toLowerCase() === userData.email.toLowerCase()) ||
+             (u.phone && u.phone === userData.phone)
+      );
+      let updated: User[];
+      if (existingIdx >= 0) {
+        updated = [...prev];
+        updated[existingIdx] = { ...updated[existingIdx], ...userData };
+      } else {
+        updated = [userData, ...prev];
+      }
+      try {
+        localStorage.setItem('portex-registered-users', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    loginUser(userData);
+  };
+
   const loginUser = (user: User) => {
     setCurrentUser(user);
     if (user.role) setUserRole(user.role);
@@ -200,6 +238,27 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
+
+    // Ensure user is also saved in directory
+    setRegisteredUsers(prev => {
+      const idx = prev.findIndex(
+        u => u.id === user.id || (u.email && u.email.toLowerCase() === user.email.toLowerCase())
+      );
+      let nextUsers: User[];
+      if (idx >= 0) {
+        nextUsers = [...prev];
+        nextUsers[idx] = { ...nextUsers[idx], ...user };
+      } else {
+        nextUsers = [user, ...prev];
+      }
+      try {
+        localStorage.setItem('portex-registered-users', JSON.stringify(nextUsers));
+      } catch {
+        // ignore
+      }
+      return nextUsers;
+    });
+
     setIsAuthModalOpen(false);
     setIsGoogleChooserOpen(false);
     showToast(`Welcome back, ${user.name}! Logged in successfully.`);
@@ -302,9 +361,10 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
     setIsLoggedIn(false);
-    setCurrentUser(CURRENT_USER);
-    setUserRole('BUYER');
     showToast('Logged out. You have signed out successfully.');
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
   };
 
   const updateUserProfile = (updates: Partial<User>) => {
@@ -315,8 +375,32 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // ignore
       }
+
+      setRegisteredUsers(usersPrev => {
+        const idx = usersPrev.findIndex(
+          u => u.id === updated.id || (u.email && u.email.toLowerCase() === updated.email.toLowerCase())
+        );
+        let nextUsers: User[];
+        if (idx >= 0) {
+          nextUsers = [...usersPrev];
+          nextUsers[idx] = { ...nextUsers[idx], ...updated };
+        } else {
+          nextUsers = [updated, ...usersPrev];
+        }
+        try {
+          localStorage.setItem('portex-registered-users', JSON.stringify(nextUsers));
+        } catch {
+          // ignore
+        }
+        return nextUsers;
+      });
+
       return updated;
     });
+
+    if (updates.role) {
+      setUserRole(updates.role);
+    }
     showToast('Profile and preferences updated successfully.');
   };
 
@@ -741,6 +825,8 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         toggleTheme,
         isLoggedIn,
         setIsLoggedIn,
+        registeredUsers,
+        registerUser,
         isAuthModalOpen,
         setIsAuthModalOpen,
         authModalTab,

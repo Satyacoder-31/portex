@@ -20,6 +20,7 @@ export const CURRENT_USER: User = {
   name: 'Krishna Verma',
   email: 'krishna.verma@example.com',
   phone: '+91 98765 43210',
+  password: 'password123',
   role: 'BUYER',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
   city: 'Lucknow',
@@ -61,6 +62,7 @@ export const DEMO_USERS: Record<string, User> = {
     name: 'Amit Sharma',
     email: 'amit.sharma@sharmalogistics.in',
     phone: '+91 98234 56780',
+    password: 'password123',
     role: 'ENTERPRISE',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
     city: 'Lucknow',
@@ -95,6 +97,7 @@ export const DEMO_USERS: Record<string, User> = {
     name: 'Priya Patel',
     email: 'priya.patel@patelhome.in',
     phone: '+91 97654 32109',
+    password: 'password123',
     role: 'SELLER',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=250&q=80',
     city: 'Lucknow',
@@ -130,6 +133,64 @@ export const DEMO_USERS: Record<string, User> = {
   },
   ALL_IN_ONE: CURRENT_USER,
 };
+
+export const INITIAL_REGISTERED_USERS: User[] = [
+  {
+    ...CURRENT_USER,
+    password: 'password123',
+  },
+  {
+    ...DEMO_USERS.MARKETPLACE_SELLER,
+    password: 'password123',
+  },
+  {
+    ...DEMO_USERS.PORTER_PARCEL,
+    password: 'password123',
+  },
+  {
+    id: 'usr_driver_03',
+    name: 'Ramesh Pilot',
+    email: 'ramesh.driver@portex.in',
+    phone: '+91 98111 22334',
+    password: 'password123',
+    role: 'DRIVER',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+    city: 'Lucknow',
+    isVerified: true,
+    rating: 4.95,
+    totalDeals: 320,
+    userIntent: 'ALL_IN_ONE',
+    porterProfile: {
+      userType: 'INDIVIDUAL',
+      defaultPickupAddress: 'Transport Nagar, Kanpur Road, Lucknow',
+      pickupPincode: '226012',
+      preferredVehicle: 'TATA_ACE_MINI_TRUCK',
+      needHelper: true,
+    },
+    marketplaceProfile: {
+      canSell: false,
+      canBuy: true,
+      buyerDeliveryAddress: 'Transport Nagar, Lucknow',
+      deliveryPincode: '226012',
+      preferredPayment: 'UPI',
+      kycVerified: true,
+    },
+  },
+  {
+    id: 'usr_admin_04',
+    name: 'Mango Tech Admin',
+    email: 'admin@portex.in',
+    phone: '+91 80099 24000',
+    password: 'admin123',
+    role: 'ADMIN',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+    city: 'Lucknow',
+    isVerified: true,
+    rating: 5.0,
+    totalDeals: 850,
+    userIntent: 'ALL_IN_ONE',
+  },
+];
 
 export const INITIAL_GOOGLE_ACCOUNTS: User[] = [
   {
