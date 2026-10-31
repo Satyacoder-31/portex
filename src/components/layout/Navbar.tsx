@@ -383,6 +383,18 @@ export default function Navbar() {
               </>
             )}
 
+            {/* Direct APK Download Badge */}
+            <a
+              href="/api/apk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors text-[11px] font-bold"
+              title="Download Official Portex Android APK (v1.0.2)"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
+              <span>APK v1.0.2</span>
+            </a>
+
             {/* Chat Icon with live unread badge - Hidden on mobile (already in bottom nav) */}
             <Link
               href="/chat"
@@ -958,6 +970,19 @@ export default function Navbar() {
                   </div>
                 </>
               )}
+
+              {/* Direct APK Download in Mobile Drawer */}
+              <div className="pt-2">
+                <a
+                  href="/api/apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center gap-2"
+                >
+                  <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Download Android APK (v1.0.2)</span>
+                </a>
+              </div>
 
               {/* Install PWA Prompt inside mobile drawer */}
               <div className="pt-2">

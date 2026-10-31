@@ -29,6 +29,7 @@ export default function DriverDashboardPage() {
     deliveries,
     updateDeliveryStatus,
     verifyDeliveryOtp,
+    triggerIncomingJobRadar,
     showToast,
   } = usePortex();
 
@@ -77,8 +78,19 @@ export default function DriverDashboardPage() {
           </div>
         </div>
 
-        {/* Online / Offline Switch */}
-        <div className="flex items-center gap-4">
+        {/* Online / Offline Switch & Test Dispatch Radar Ping */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={triggerIncomingJobRadar}
+            className="p-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 flex items-center gap-1.5 transition-transform hover:scale-105"
+            title="Simulate an incoming dispatch radar job notification"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Test Radar Ping</span>
+            <span className="sm:hidden">Radar</span>
+          </button>
+
           <div className="text-right">
             <span className="text-[11px] text-slate-400 block uppercase font-bold tracking-wider">
               Duty Status
@@ -88,7 +100,7 @@ export default function DriverDashboardPage() {
                 isDriverOnline ? 'text-emerald-400' : 'text-slate-500'
               }`}
             >
-              {isDriverOnline ? 'ON DUTY (Receiving Orders)' : 'OFFLINE'}
+              {isDriverOnline ? 'ON DUTY' : 'OFFLINE'}
             </span>
           </div>
 

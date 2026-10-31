@@ -55,25 +55,28 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.1
-          name: "PORTEX Mobile App v1.0.1"
+          tag_name: v1.0.2
+          name: "PORTEX Mobile App v1.0.2"
           draft: false
           prerelease: false
           generate_release_notes: false
           body: |
-            ## 📱 PORTEX Official Android App (v1.0.1)
+            ## 📱 PORTEX Official Android App (v1.0.2)
             
             Hyperlocal Classifieds & On-Demand Logistics Platform — Direct Android Application.
             
-            ### 🛠️ What's New in v1.0.1:
-            - **100% Mobile Friendly**: Fixed horizontal scrolling issue where pages scrolled off the right edge.
-            - **Strict Viewport Containment**: Locked viewport scale and bounds for ultra-responsive mobile navigation.
-            - **Native WebView Polish**: Enhanced touch responsiveness and overscroll elimination.
+            ### 🛠️ What's New in v1.0.2:
+            - **End-to-End Buyer, Seller & Delivery Flow**: Fully verified browsing, photo uploads, negotiations, OTP handshakes, and dispatching.
+            - **Interactive Live Chat System**: Chat directly with sellers and drivers, attach photos, negotiate offers, and trigger 1-click Porter delivery at agreed prices.
+            - **Driver Pilot Mode & Radar**: Live radar dispatch simulator with 45s countdown timer, turn-by-turn navigation, and trip completion earnings.
+            - **Native Camera & File Picker**: Take photos or upload item pictures directly into listings and chat.
+            - **GST Tax Invoices**: Download compliant invoices to Android storage via DownloadManager.
+            - **Strict Viewport Containment**: Zero horizontal scrolling with 100% responsive touch layout.
             
             ### 📥 Download APK
-            - **[Download portex.apk (Recommended)](https://github.com/Satyacoder-31/portex/releases/download/v1.0.1/portex.apk)**
-            - **[Download portex-release.apk](https://github.com/Satyacoder-31/portex/releases/download/v1.0.1/portex-release.apk)**
-            - **[Download portex-debug.apk](https://github.com/Satyacoder-31/portex/releases/download/v1.0.1/portex-debug.apk)**
+            - **[Download portex.apk (Recommended)](https://github.com/Satyacoder-31/portex/releases/download/v1.0.2/portex.apk)**
+            - **[Download portex-release.apk](https://github.com/Satyacoder-31/portex/releases/download/v1.0.2/portex-release.apk)**
+            - **[Download portex-debug.apk](https://github.com/Satyacoder-31/portex/releases/download/v1.0.2/portex-debug.apk)**
             
             ### ✨ Features Included:
             - **Hyperlocal Marketplace**: Buy and sell verified items with instant Porter shipping trigger.

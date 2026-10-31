@@ -13,7 +13,7 @@ interface MakeOfferModalProps {
 
 export default function MakeOfferModal({ listing, onClose }: MakeOfferModalProps) {
   const router = useRouter();
-  const { sendMessage, showToast } = usePortex();
+  const { sendMessage, getOrCreateConversation, showToast } = usePortex();
   const [offerAmount, setOfferAmount] = useState(Math.round(listing.price * 0.9));
   const [note, setNote] = useState('Hi, I am interested and can arrange immediate Porter pickup.');
 
@@ -30,11 +30,28 @@ export default function MakeOfferModal({ listing, onClose }: MakeOfferModalProps
     e.preventDefault();
     if (offerAmount <= 0) return;
 
-    // Send offer into chat conversation
-    sendMessage('conv-1', `${note} [Official Offer: ₹${offerAmount.toLocaleString('en-IN')}]`, offerAmount);
+    // Get or create conversation specifically for this listing and seller
+    const conv = getOrCreateConversation({
+      listingId: listing.id,
+      contactId: listing.sellerId,
+      contactName: `${listing.sellerName} (Seller)`,
+      contactAvatar: listing.sellerAvatar,
+      contactRole: 'Verified Seller',
+      listingTitle: listing.title,
+      listingPrice: listing.price,
+      listingImage: listing.images[0],
+      initialMessage: `Offer: ₹${offerAmount.toLocaleString('en-IN')}`,
+    });
+
+    // Send offer into that conversation thread
+    sendMessage(
+      conv.id,
+      `${note} [Official Offer: ₹${offerAmount.toLocaleString('en-IN')}]`,
+      offerAmount
+    );
     showToast(`Offer of ₹${offerAmount.toLocaleString('en-IN')} sent to ${listing.sellerName}!`);
     onClose();
-    router.push('/chat');
+    router.push(`/chat?conv=${conv.id}`);
   };
 
   return (

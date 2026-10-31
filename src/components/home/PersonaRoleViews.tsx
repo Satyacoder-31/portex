@@ -1391,7 +1391,7 @@ export function SellerHomeView() {
                   Accept Offer (₹15,500)
                 </button>
                 <Link
-                  href="/chat"
+                  href="/chat?conv=conv-1"
                   className="py-2 px-3 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold"
                 >
                   Chat / Counter
@@ -1436,7 +1436,7 @@ export function SellerHomeView() {
                   Accept Offer (₹5,800)
                 </button>
                 <Link
-                  href="/chat"
+                  href="/chat?conv=conv-3"
                   className="py-2 px-3 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold"
                 >
                   Chat / Counter

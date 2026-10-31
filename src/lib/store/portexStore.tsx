@@ -62,8 +62,20 @@ interface PortexStoreContextType {
 
   conversations: ChatConversation[];
   messages: Record<string, ChatMessage[]>;
-  sendMessage: (conversationId: string, content: string, offerAmount?: number) => void;
+  sendMessage: (conversationId: string, content: string, offerAmount?: number, imageUrl?: string) => void;
   respondToOffer: (conversationId: string, messageId: string, status: 'ACCEPTED' | 'DECLINED') => void;
+  getOrCreateConversation: (params: {
+    listingId?: string;
+    deliveryId?: string;
+    contactId?: string;
+    contactName?: string;
+    contactAvatar?: string;
+    contactRole?: string;
+    listingTitle?: string;
+    listingPrice?: number;
+    listingImage?: string;
+    initialMessage?: string;
+  }) => ChatConversation;
 
   // Driver Partner Mode
   isDriverOnline: boolean;
@@ -71,6 +83,7 @@ interface PortexStoreContextType {
   incomingJob: IncomingJobRequest | null;
   acceptIncomingJob: (jobId: string) => void;
   rejectIncomingJob: () => void;
+  triggerIncomingJobRadar: () => void;
   driverEarnings: {
     today: number;
     thisWeek: number;
@@ -499,6 +512,22 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
 
       const savedFavs = localStorage.getItem('portex_favorites');
       if (savedFavs) setFavorites(JSON.parse(savedFavs));
+
+      const savedConvs = localStorage.getItem('portex_conversations');
+      if (savedConvs) {
+        const parsedConvs = JSON.parse(savedConvs);
+        if (Array.isArray(parsedConvs) && parsedConvs.length > 0) {
+          setConversations(parsedConvs);
+        }
+      }
+
+      const savedMsgs = localStorage.getItem('portex_messages');
+      if (savedMsgs) {
+        const parsedMsgs = JSON.parse(savedMsgs);
+        if (parsedMsgs && typeof parsedMsgs === 'object') {
+          setMessages(parsedMsgs);
+        }
+      }
     } catch {
       // Fallback to in-memory initial data
     }
@@ -511,10 +540,12 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('portex_deliveries', JSON.stringify(deliveries));
       localStorage.setItem('portex_business_profile', JSON.stringify(businessProfile));
       localStorage.setItem('portex_favorites', JSON.stringify(favorites));
+      localStorage.setItem('portex_conversations', JSON.stringify(conversations));
+      localStorage.setItem('portex_messages', JSON.stringify(messages));
     } catch {
       // Ignore quota errors
     }
-  }, [listings, deliveries, businessProfile, favorites]);
+  }, [listings, deliveries, businessProfile, favorites, conversations, messages]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -710,13 +741,111 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     showToast('Digital Proof of Delivery (POD) recorded!');
   };
 
-  const sendMessage = (conversationId: string, content: string, offerAmount?: number) => {
+  const getOrCreateConversation = (params: {
+    listingId?: string;
+    deliveryId?: string;
+    contactId?: string;
+    contactName?: string;
+    contactAvatar?: string;
+    contactRole?: string;
+    listingTitle?: string;
+    listingPrice?: number;
+    listingImage?: string;
+    initialMessage?: string;
+  }): ChatConversation => {
+    // 1. Check if matching deliveryId
+    if (params.deliveryId) {
+      const existing = conversations.find(c => c.deliveryId === params.deliveryId);
+      if (existing) return existing;
+    }
+
+    // 2. Check if matching listingId
+    if (params.listingId) {
+      const existing = conversations.find(c => c.listingId === params.listingId);
+      if (existing) return existing;
+    }
+
+    // 3. Check if matching contactId
+    if (params.contactId) {
+      const existing = conversations.find(c => c.contactId === params.contactId);
+      if (existing) return existing;
+    }
+
+    // 4. Create brand new conversation
+    const newId = `conv-${Date.now()}`;
+    const newConv: ChatConversation = {
+      id: newId,
+      contactId: params.contactId || (params.deliveryId ? 'drv-301' : 'usr_seller_temp'),
+      contactName: params.contactName || (params.deliveryId ? 'Mohd. Imran Khan (Driver)' : 'Seller Support'),
+      contactAvatar:
+        params.contactAvatar ||
+        (params.deliveryId
+          ? 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'
+          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'),
+      contactRole: params.contactRole || (params.deliveryId ? 'Portex Fleet Partner' : 'Verified Seller'),
+      lastMessage:
+        params.initialMessage ||
+        (params.deliveryId
+          ? 'Hello! I am your assigned Portex driver partner.'
+          : 'Hello! I am available to pack and dispatch via Portex anytime.'),
+      lastTimestamp: 'Just now',
+      unreadCount: 0,
+      listingId: params.listingId,
+      listingTitle: params.listingTitle,
+      listingPrice: params.listingPrice,
+      listingImage: params.listingImage,
+      deliveryId: params.deliveryId,
+      isOnline: true,
+    };
+
+    const initialWelcome: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      senderId: newConv.contactId,
+      senderName: newConv.contactName,
+      recipientId: currentUser.id,
+      listingId: params.listingId,
+      deliveryId: params.deliveryId,
+      content: params.deliveryId
+        ? `Hello ${currentUser.name}! I am Mohd. Imran Khan, your Portex driver partner. Cargo safety and fast delivery is guaranteed.`
+        : `Hello! Thanks for your interest in ${params.listingTitle || 'this item'}. Feel free to ask questions, request Porter delivery, or make an offer!`,
+      timestamp: 'Just now',
+      isRead: true,
+    };
+
+    setConversations(prev => {
+      const updated = [newConv, ...prev];
+      try {
+        localStorage.setItem('portex_conversations', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    setMessages(prev => {
+      const updated = {
+        ...prev,
+        [newId]: [initialWelcome],
+      };
+      try {
+        localStorage.setItem('portex_messages', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    return newConv;
+  };
+
+  const sendMessage = (conversationId: string, content: string, offerAmount?: number, imageUrl?: string) => {
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       senderId: currentUser.id,
       senderName: currentUser.name,
       recipientId: 'usr_other',
-      content,
+      content: content || (imageUrl ? 'Sent an image attachment' : ''),
+      imageUrl,
       isOffer: !!offerAmount,
       offerAmount,
       offerStatus: offerAmount ? 'PENDING' : undefined,
@@ -724,45 +853,133 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       isRead: true,
     };
 
-    setMessages(prev => ({
-      ...prev,
-      [conversationId]: [...(prev[conversationId] || []), newMsg],
-    }));
+    setMessages(prev => {
+      const updated = {
+        ...prev,
+        [conversationId]: [...(prev[conversationId] || []), newMsg],
+      };
+      try {
+        localStorage.setItem('portex_messages', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
 
-    setConversations(prev =>
-      prev.map(c => (c.id === conversationId ? { ...c, lastMessage: content, lastTimestamp: 'Just now' } : c))
-    );
+    const displaySummary = imageUrl ? '📷 Photo attachment' : content;
+    setConversations(prev => {
+      const updated = prev.map(c =>
+        c.id === conversationId ? { ...c, lastMessage: displaySummary, lastTimestamp: 'Just now' } : c
+      );
+      try {
+        localStorage.setItem('portex_conversations', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
 
-    // Simulated automated seller reply after 2.5s
+    // Simulated automated intelligent reply after 2.0s
     setTimeout(() => {
+      const conv = conversations.find(c => c.id === conversationId);
+      const isDriver =
+        conv?.deliveryId ||
+        conv?.contactRole?.toLowerCase().includes('driver') ||
+        conv?.contactRole?.toLowerCase().includes('partner');
+
+      let replyContent = 'Thank you for your message! I am available to dispatch via Portex anytime.';
+      if (offerAmount) {
+        replyContent = `Thanks for your offer of ₹${offerAmount.toLocaleString('en-IN')}! Let me confirm the pickup readiness.`;
+      } else if (imageUrl) {
+        replyContent = 'Photo received! Looks in great condition, ready for packing and instant courier dispatch.';
+      } else if (isDriver) {
+        replyContent = 'Acknowledged! Following live GPS route now. Will reach the waypoint shortly.';
+      }
+
       const replyMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
-        senderId: 'usr_other',
-        senderName: 'Seller Support',
+        senderId: conv?.contactId || 'usr_other',
+        senderName: conv?.contactName || 'Seller Support',
         recipientId: currentUser.id,
-        content: offerAmount
-          ? `Thanks for your offer of ₹${offerAmount.toLocaleString('en-IN')}! Let me confirm the pickup readiness.`
-          : 'Thank you for your message! I am available to dispatch via Portex anytime.',
+        content: replyContent,
         timestamp: 'Just now',
         isRead: false,
       };
 
-      setMessages(p => ({
-        ...p,
-        [conversationId]: [...(p[conversationId] || []), replyMsg],
-      }));
-    }, 2500);
+      setMessages(p => {
+        const next = {
+          ...p,
+          [conversationId]: [...(p[conversationId] || []), replyMsg],
+        };
+        try {
+          localStorage.setItem('portex_messages', JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+
+      setConversations(p => {
+        const next = p.map(c =>
+          c.id === conversationId ? { ...c, lastMessage: replyContent, lastTimestamp: 'Just now' } : c
+        );
+        try {
+          localStorage.setItem('portex_conversations', JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    }, 2000);
   };
 
   const respondToOffer = (conversationId: string, messageId: string, status: 'ACCEPTED' | 'DECLINED') => {
     setMessages(prev => {
       const thread = prev[conversationId] || [];
-      return {
+      const updatedThread = thread.map(m => (m.id === messageId ? { ...m, offerStatus: status } : m));
+      const next = {
         ...prev,
-        [conversationId]: thread.map(m => (m.id === messageId ? { ...m, offerStatus: status } : m)),
+        [conversationId]: updatedThread,
       };
+      try {
+        localStorage.setItem('portex_messages', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
     });
+
+    const statusNote = status === 'ACCEPTED' ? '✅ Offer Accepted!' : '❌ Offer Declined.';
+    setConversations(prev => {
+      const next = prev.map(c =>
+        c.id === conversationId ? { ...c, lastMessage: statusNote, lastTimestamp: 'Just now' } : c
+      );
+      try {
+        localStorage.setItem('portex_conversations', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+
     showToast(`Offer ${status.toLowerCase()}!`);
+  };
+
+  const triggerIncomingJobRadar = () => {
+    const sampleJob: IncomingJobRequest = {
+      id: `del-radar-${Date.now()}`,
+      customerName: 'Vivek Singhania (Hazratganj Store)',
+      vehicleType: 'Tata Ace Gold CNG',
+      pickupAddress: 'Shop 14, Hazratganj Central, Lucknow',
+      dropAddress: 'Warehouse 9, Transport Nagar, Kanpur Road, Lucknow',
+      distanceKm: 14.8,
+      fareAmount: 580,
+      packageType: 'Commercial Garments & Fabric Rolls (380 kg)',
+      weightKg: 380,
+      expiresInSec: 45,
+    };
+    setIncomingJob(sampleJob);
+    showToast('🚨 Incoming Portex Dispatch Ping received on radar!');
   };
 
   const acceptIncomingJob = (jobId: string) => {
@@ -810,11 +1027,13 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         messages,
         sendMessage,
         respondToOffer,
+        getOrCreateConversation,
         isDriverOnline,
         setIsDriverOnline,
         incomingJob,
         acceptIncomingJob,
         rejectIncomingJob,
+        triggerIncomingJobRadar,
         driverEarnings,
         businessProfile,
         updateBusinessProfile,

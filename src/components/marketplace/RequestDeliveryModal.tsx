@@ -10,9 +10,10 @@ import { VEHICLE_OPTIONS } from '@/lib/data/mockData';
 interface RequestDeliveryModalProps {
   listing: Listing;
   onClose: () => void;
+  offerPrice?: number;
 }
 
-export default function RequestDeliveryModal({ listing, onClose }: RequestDeliveryModalProps) {
+export default function RequestDeliveryModal({ listing, onClose, offerPrice }: RequestDeliveryModalProps) {
   const router = useRouter();
   const { currentUser, createDeliveryBooking } = usePortex();
 
@@ -139,6 +140,11 @@ export default function RequestDeliveryModal({ listing, onClose }: RequestDelive
                 <span>Weight: <strong className="text-slate-800 dark:text-slate-200">{listing.weightKg} kg</strong></span>
                 <span>Dim: <strong className="text-slate-800 dark:text-slate-200">{listing.dimensions}</strong></span>
                 <span>Price: <strong className="text-blue-600 dark:text-blue-400">₹{listing.price.toLocaleString('en-IN')}</strong></span>
+                {offerPrice && (
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                    Deal: ₹{offerPrice.toLocaleString('en-IN')}
+                  </span>
+                )}
               </div>
             </div>
           </div>

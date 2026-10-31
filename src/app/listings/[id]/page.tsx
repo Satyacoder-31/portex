@@ -37,7 +37,19 @@ export default function ListingDetailPage() {
 
   const favorite = isFavorite(listing.id);
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: listing.title,
+          text: `Check out ${listing.title} on PORTEX Marketplace for ₹${listing.price.toLocaleString('en-IN')}`,
+          url: window.location.href,
+        });
+        return;
+      } catch {
+        // Fallback to clipboard
+      }
+    }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
       showToast('Listing URL copied to clipboard!');
@@ -216,7 +228,7 @@ export default function ListingDetailPage() {
                 </button>
 
                 <Link
-                  href="/chat"
+                  href={`/chat?listingId=${listing.id}`}
                   className="py-3 px-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-blue-500/20"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />

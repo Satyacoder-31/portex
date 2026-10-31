@@ -172,11 +172,11 @@ export default function TrackingDetailPage() {
               </a>
 
               <Link
-                href="/chat"
+                href={`/chat?deliveryId=${booking.id}`}
                 className="flex-1 sm:flex-initial px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span>Chat</span>
+                <span>Chat Driver</span>
               </Link>
             </div>
           </div>
