@@ -11,6 +11,7 @@ import {
   UserRole,
   DeliveryStatusStage,
   DeliveryVehicleType,
+  ListingStatus,
 } from '@/types';
 import {
   INITIAL_LISTINGS,
@@ -21,6 +22,7 @@ import {
   CURRENT_USER,
   INITIAL_REGISTERED_USERS,
   INITIAL_GOOGLE_ACCOUNTS,
+  INITIAL_RECENT_SEARCHES,
 } from '@/lib/data/mockData';
 
 interface IncomingJobRequest {
@@ -128,6 +130,20 @@ interface PortexStoreContextType {
   businessProfile: BusinessProfile;
   updateBusinessProfile: (profile: Partial<BusinessProfile>) => void;
 
+  // Meesho-Style Voice Search & Recent Searches
+  recentSearches: string[];
+  addRecentSearch: (query: string) => void;
+  removeRecentSearch: (query: string) => void;
+  clearRecentSearches: () => void;
+  isVoiceModalOpen: boolean;
+  setIsVoiceModalOpen: (open: boolean) => void;
+  openVoiceSearch: () => void;
+  closeVoiceSearch: () => void;
+
+  // OLX-Style Listing Expiration & Bulk Chat Deletion
+  renewListing: (listingId: string) => void;
+  deleteConversations: (conversationIds: string[]) => void;
+
   // Notification Toast Helper
   toastMessage: string | null;
   showToast: (msg: string) => void;
@@ -162,6 +178,10 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [googleAccounts, setGoogleAccounts] = useState<User[]>(INITIAL_GOOGLE_ACCOUNTS);
   const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState<boolean>(false);
 
+  // Meesho-style Voice Search & Recent Searches State
+  const [recentSearches, setRecentSearches] = useState<string[]>(INITIAL_RECENT_SEARCHES);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
+
   // Restore saved user & registered accounts from localStorage
   useEffect(() => {
     try {
@@ -194,6 +214,14 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         const parsedAccounts = JSON.parse(savedAccountsStr);
         if (Array.isArray(parsedAccounts) && parsedAccounts.length > 0) {
           setGoogleAccounts(parsedAccounts);
+        }
+      }
+
+      const savedSearches = localStorage.getItem('portex_recent_searches');
+      if (savedSearches) {
+        const parsedSearches = JSON.parse(savedSearches);
+        if (Array.isArray(parsedSearches) && parsedSearches.length > 0) {
+          setRecentSearches(parsedSearches);
         }
       }
     } catch {
@@ -1003,6 +1031,113 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     showToast('Business & Tax configuration saved successfully.');
   };
 
+  const addRecentSearch = (query: string) => {
+    if (!query || !query.trim()) return;
+    const clean = query.trim();
+    setRecentSearches(prev => {
+      const filtered = prev.filter(q => q.toLowerCase() !== clean.toLowerCase());
+      const updated = [clean, ...filtered].slice(0, 10);
+      try {
+        localStorage.setItem('portex_recent_searches', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
+  const removeRecentSearch = (query: string) => {
+    setRecentSearches(prev => {
+      const updated = prev.filter(q => q !== query);
+      try {
+        localStorage.setItem('portex_recent_searches', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem('portex_recent_searches');
+    } catch {
+      // ignore
+    }
+    showToast('Recent searches cleared');
+  };
+
+  const openVoiceSearch = () => setIsVoiceModalOpen(true);
+  const closeVoiceSearch = () => setIsVoiceModalOpen(false);
+
+  const renewListing = (listingId: string) => {
+    setListings(prev => {
+      const updated = prev.map(l => {
+        if (l.id !== listingId) return l;
+        return {
+          ...l,
+          status: 'ACTIVE' as ListingStatus,
+          expiryDaysRemaining: 30,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        };
+      });
+      try {
+        localStorage.setItem('portex_listings', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    setConversations(prev => {
+      const updated = prev.map(c => {
+        if (c.listingId !== listingId) return c;
+        return {
+          ...c,
+          isAdInactive: false,
+          chatExpiresInDays: undefined,
+          adStatus: 'ACTIVE' as ListingStatus,
+        };
+      });
+      try {
+        localStorage.setItem('portex_conversations', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    showToast('🎉 Listing renewed! Active for 30 more days on the marketplace.');
+  };
+
+  const deleteConversations = (conversationIds: string[]) => {
+    setConversations(prev => {
+      const updated = prev.filter(c => !conversationIds.includes(c.id));
+      try {
+        localStorage.setItem('portex_conversations', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    setMessages(prev => {
+      const copy = { ...prev };
+      conversationIds.forEach(id => {
+        delete copy[id];
+      });
+      try {
+        localStorage.setItem('portex_messages', JSON.stringify(copy));
+      } catch {
+        // ignore
+      }
+      return copy;
+    });
+
+    showToast(`Deleted ${conversationIds.length} conversation${conversationIds.length > 1 ? 's' : ''}`);
+  };
+
   return (
     <PortexContext.Provider
       value={{
@@ -1065,6 +1200,16 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         switchGoogleAccount,
         addAndLoginGoogleAccount,
         removeGoogleAccount,
+        recentSearches,
+        addRecentSearch,
+        removeRecentSearch,
+        clearRecentSearches,
+        isVoiceModalOpen,
+        setIsVoiceModalOpen,
+        openVoiceSearch,
+        closeVoiceSearch,
+        renewListing,
+        deleteConversations,
       }}
     >
       {children}

@@ -18,6 +18,8 @@ import {
   Eye,
   Info,
   Package,
+  AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import MakeOfferModal from '@/components/marketplace/MakeOfferModal';
@@ -28,7 +30,7 @@ export default function ListingDetailPage() {
   const router = useRouter();
   const listingId = params?.id as string;
 
-  const { listings, toggleFavorite, isFavorite, showToast } = usePortex();
+  const { listings, toggleFavorite, isFavorite, showToast, renewListing } = usePortex();
   const listing = listings.find(l => l.id === listingId) || listings[0];
 
   const [selectedImage, setSelectedImage] = useState(0);
@@ -77,6 +79,41 @@ export default function ListingDetailPage() {
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
       </div>
+
+      {/* OLX-Style Inactive / Expired Notice Banner */}
+      {listing.status === 'EXPIRED' && (
+        <div className="p-4 sm:p-5 bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-400 dark:border-rose-800 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-rose-600 text-white rounded-2xl flex-shrink-0 shadow-md">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider">
+                  OLX Ad Inactive
+                </span>
+                <span className="text-xs text-rose-600 dark:text-rose-400 font-bold">
+                  Expired &bull; Chats will auto-delete in 8 days
+                </span>
+              </div>
+              <h3 className="text-sm font-black text-rose-950 dark:text-rose-100 mt-0.5">
+                This listing has expired and is hidden from public buyer search
+              </h3>
+              <p className="text-xs text-rose-700 dark:text-rose-300">
+                You can renew this advertisement anytime to reactivate it for another 30 days and keep ongoing buyer conversations open.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => renewListing(listing.id)}
+            className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-2xl shadow-md flex items-center gap-2 flex-shrink-0 transition-transform hover:scale-105 cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>Renew Ad (30 Days)</span>
+          </button>
+        </div>
+      )}
 
       {/* Main 2-Column Product Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

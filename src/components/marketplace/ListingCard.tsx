@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Heart, MapPin, ShieldCheck, Truck, ArrowRight, Eye } from 'lucide-react';
+import { Heart, MapPin, ShieldCheck, Truck, ArrowRight, Eye, RotateCcw, AlertTriangle } from 'lucide-react';
 import { Listing } from '@/types';
 import { usePortex } from '@/lib/store/portexStore';
 import RequestDeliveryModal from './RequestDeliveryModal';
@@ -12,9 +12,10 @@ interface ListingCardProps {
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
-  const { toggleFavorite, isFavorite } = usePortex();
+  const { toggleFavorite, isFavorite, renewListing, currentUser, showToast } = usePortex();
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const favorite = isFavorite(listing.id);
+  const isExpired = listing.status === 'EXPIRED';
 
   const conditionLabels: Record<string, { text: string; bg: string }> = {
     BRAND_NEW: { text: 'Brand New', bg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
@@ -50,6 +51,15 @@ export default function ListingCard({ listing }: ListingCardProps) {
                 FEATURED
               </span>
             )}
+            {isExpired ? (
+              <span className="text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-600 text-white shadow-md flex items-center gap-1">
+                <AlertTriangle className="w-2.5 h-2.5" /> Ad Inactive
+              </span>
+            ) : listing.expiryDaysRemaining !== undefined ? (
+              <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-900/80 text-amber-300 border border-amber-500/40 backdrop-blur-md">
+                Expires in {listing.expiryDaysRemaining}d
+              </span>
+            ) : null}
           </div>
 
           {/* Favorite Button */}
@@ -127,13 +137,24 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
           {/* Quick Dual Action Buttons (Unified OLX + Porter) */}
           <div className="mt-2 pt-2 sm:mt-3.5 sm:pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-1.5 sm:gap-2">
-            <button
-              onClick={() => setShowDeliveryModal(true)}
-              className="px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 dark:border-emerald-800/60 transition-colors"
-            >
-              <Truck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-              <span>Deliver</span>
-            </button>
+            {isExpired ? (
+              <button
+                onClick={() => renewListing(listing.id)}
+                className="px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 shadow-sm transition-colors cursor-pointer"
+                title="Renew this ad for 30 days"
+              >
+                <RotateCcw className="w-3 h-3 flex-shrink-0" />
+                <span>Renew Ad</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowDeliveryModal(true)}
+                className="px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 dark:border-emerald-800/60 transition-colors"
+              >
+                <Truck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                <span>Deliver</span>
+              </button>
+            )}
 
             <Link
               href={`/listings/${listing.id}`}

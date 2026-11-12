@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Search,
@@ -14,9 +14,16 @@ import {
   ChevronDown,
   ArrowUpDown,
   Zap,
+  Mic,
+  Clock,
+  Sparkles,
+  Trash2,
+  Volume2,
+  ArrowRight,
+  RotateCcw,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
-import { CATEGORIES } from '@/lib/data/mockData';
+import { CATEGORIES, POPULAR_SEARCHES } from '@/lib/data/mockData';
 import ListingCard from '@/components/marketplace/ListingCard';
 import Link from 'next/link';
 
@@ -25,15 +32,39 @@ function MarketplaceContent() {
   const initialCat = searchParams.get('cat') || 'all';
   const initialQuery = searchParams.get('q') || '';
 
-  const { listings, userRole } = usePortex();
+  const {
+    listings,
+    userRole,
+    recentSearches,
+    addRecentSearch,
+    removeRecentSearch,
+    clearRecentSearches,
+    openVoiceSearch,
+  } = usePortex();
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCat);
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
   const [maxPrice, setMaxPrice] = useState<number>(250000);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [includeExpired, setIncludeExpired] = useState(true);
   const [sortBy, setSortBy] = useState<'featured' | 'price_asc' | 'price_desc' | 'newest'>('featured');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showVoiceSearchTray, setShowVoiceSearchTray] = useState(false);
+
+  // Sync search query when url params change (e.g. from voice search or navbar)
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null) {
+      setSearchQuery(q);
+      if (q) addRecentSearch(q);
+    }
+  }, [searchParams]);
+
+  const handleSelectQuery = (term: string) => {
+    setSearchQuery(term);
+    addRecentSearch(term);
+  };
 
   // Filter listings
   const filteredListings = useMemo(() => {
@@ -124,7 +155,7 @@ function MarketplaceContent() {
         </div>
       )}
       {/* Top Banner / Heading */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             PORTEX Marketplace
@@ -134,7 +165,17 @@ function MarketplaceContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* Meesho-style Quick Speak Button */}
+          <button
+            onClick={() => openVoiceSearch()}
+            className="px-4 py-2 bg-[#8b1874] hover:bg-[#72135f] text-white text-xs font-black rounded-xl shadow-md shadow-purple-900/20 flex items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+            title="Click to speak (English or Hindi)"
+          >
+            <Mic className="w-4 h-4 animate-pulse text-amber-300" />
+            <span>Speak</span>
+          </button>
+
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className="md:hidden flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300"
@@ -150,6 +191,147 @@ function MarketplaceContent() {
             <PlusCircle className="w-4 h-4" />
             <span>+ Post Ad</span>
           </Link>
+        </div>
+      </div>
+
+      {/* Meesho-Style Voice & Smart Search Experience Hub (Screenshot 1 Match) */}
+      <div className="bg-gradient-to-br from-purple-50/80 via-white to-fuchsia-50/50 dark:from-slate-900 dark:via-slate-900/90 dark:to-purple-950/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-purple-200/70 dark:border-purple-900/30 shadow-sm space-y-4">
+        {/* Search Bar matching Meesho header */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by Keyword or Product (e.g. shoe for man 10, saree, MacBook)..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  addRecentSearch(searchQuery.trim());
+                }
+              }}
+              className="w-full pl-10 pr-20 py-2.5 sm:py-3 bg-white dark:bg-slate-800/90 rounded-2xl text-xs sm:text-sm text-slate-900 dark:text-white border border-purple-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm"
+            />
+            {searchQuery ? (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-10 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => openVoiceSearch()}
+              className="absolute right-3 top-2.5 p-1 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-950/50 rounded-lg transition-transform hover:scale-110"
+              title="Voice Search"
+              aria-label="Speak search"
+            >
+              <Mic className="w-4 h-4" />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => openVoiceSearch()}
+            className="flex-shrink-0 px-6 py-2.5 sm:py-3 bg-[#8b1874] hover:bg-[#72135f] text-white font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-purple-900/25 flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <Mic className="w-4 h-4 animate-bounce text-amber-300" />
+            <span>Speak</span>
+          </button>
+        </div>
+
+        {/* Two Columns: Recent Searches + Popular Searches (Exact Meesho Layout) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-purple-100 dark:border-slate-800">
+          {/* Your Recent Searches */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <span>Your Recent Searches</span>
+              </h3>
+              {recentSearches.length > 0 && (
+                <button
+                  onClick={clearRecentSearches}
+                  className="text-[11px] text-slate-400 hover:text-rose-500 transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              {recentSearches.slice(0, 4).map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between group p-1.5 px-2.5 rounded-xl hover:bg-purple-100/60 dark:hover:bg-slate-800/70 transition-colors"
+                >
+                  <button
+                    onClick={() => handleSelectQuery(item)}
+                    className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-purple-700 dark:hover:text-purple-400 text-left truncate flex-1 font-medium"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <span className="truncate">{item}</span>
+                  </button>
+                  <button
+                    onClick={() => removeRecentSearch(item)}
+                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 p-1 transition-opacity"
+                    title="Remove"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Popular Searches Chips */}
+          <div>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Popular Searches</span>
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {POPULAR_SEARCHES.map((chip, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectQuery(chip)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    searchQuery.toLowerCase() === chip.toLowerCase()
+                      ? 'bg-[#8b1874] text-white shadow-sm'
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-purple-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                  }`}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Meesho Shopping Banner Card with Purple Speak Button */}
+        <div className="mt-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-100 via-fuchsia-50 to-pink-100 dark:from-purple-950/40 dark:via-slate-900 dark:to-fuchsia-950/30 border border-purple-200/80 dark:border-purple-800/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#8b1874] text-white flex items-center justify-center font-black text-lg shadow flex-shrink-0">
+              🎤
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                Jhumka Bareilly ka ya Saree Banarasi?
+              </h4>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                Speak what you ❤️ in Hindi or English — PORTEX instant voice search will find it!
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => openVoiceSearch()}
+            className="px-5 py-2 bg-[#8b1874] hover:bg-[#72135f] text-white font-bold text-xs rounded-xl shadow-md shadow-purple-900/20 flex items-center gap-1.5 flex-shrink-0 transition-transform hover:scale-105 cursor-pointer"
+          >
+            <Mic className="w-3.5 h-3.5 text-amber-300" />
+            <span>Speak Now</span>
+          </button>
         </div>
       </div>
 
@@ -191,8 +373,16 @@ function MarketplaceContent() {
                 placeholder="Search titles..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500"
+                className="w-full pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500"
               />
+              <button
+                type="button"
+                onClick={() => openVoiceSearch()}
+                className="absolute right-2 top-2 p-1 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-slate-700 rounded-lg"
+                title="Speak keyword"
+              >
+                <Mic className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
@@ -333,6 +523,22 @@ function MarketplaceContent() {
             </div>
           )}
         </main>
+      </div>
+
+      {/* Floating Meesho-style Speak Button at Bottom (matches Screenshot 1) */}
+      <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40">
+        <button
+          onClick={() => openVoiceSearch()}
+          className="px-5 py-3 rounded-full bg-[#8b1874] hover:bg-[#72135f] text-white font-black text-sm shadow-2xl flex items-center gap-2.5 transition-transform hover:scale-105 active:scale-95 border-2 border-purple-300/40 group cursor-pointer"
+          title="Voice search (Speak in English or Hindi)"
+          aria-label="Speak search"
+        >
+          <div className="relative">
+            <Mic className="w-5 h-5 text-amber-300 group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          </div>
+          <span>Speak</span>
+        </button>
       </div>
     </div>
   );

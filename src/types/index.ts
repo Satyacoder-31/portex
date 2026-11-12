@@ -101,6 +101,8 @@ export interface Listing {
   status: ListingStatus;
   isFeatured?: boolean;
   createdAt: string;
+  expiresAt?: string;
+  expiryDaysRemaining?: number;
   views: number;
   likes: number;
 }
@@ -216,6 +218,9 @@ export interface ChatConversation {
   listingImage?: string;
   deliveryId?: string;
   isOnline: boolean;
+  isAdInactive?: boolean;
+  chatExpiresInDays?: number;
+  adStatus?: ListingStatus;
 }
 
 export interface BusinessProfile {

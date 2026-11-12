@@ -5,3 +5,4 @@ export async function GET() {
   const apkReleaseUrl = 'https://github.com/Satyacoder-31/portex/releases/download/v1.0.2/portex.apk';
   return NextResponse.redirect(apkReleaseUrl, 302);
 }
+

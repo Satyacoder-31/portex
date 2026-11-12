@@ -19,6 +19,13 @@ import {
   ExternalLink,
   Plus,
   Loader2,
+  Trash2,
+  CheckSquare,
+  Square,
+  RotateCcw,
+  AlertTriangle,
+  X,
+  Check,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import RequestDeliveryModal from '@/components/marketplace/RequestDeliveryModal';
@@ -41,6 +48,8 @@ function ChatContent() {
     listings,
     deliveries,
     showToast,
+    deleteConversations,
+    renewListing,
   } = usePortex();
 
   const [activeConvId, setActiveConvId] = useState<string>(conversations[0]?.id || 'conv-1');
@@ -50,6 +59,31 @@ function ChatContent() {
   const [selectedOfferPrice, setSelectedOfferPrice] = useState<number | undefined>(undefined);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [selectedConvIds, setSelectedConvIds] = useState<string[]>([]);
+  const isSelectionMode = selectedConvIds.length > 0;
+
+  const toggleSelectConversation = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedConvIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedConvIds.length === conversations.length) {
+      setSelectedConvIds([]);
+    } else {
+      setSelectedConvIds(conversations.map(c => c.id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedConvIds.length === 0) return;
+    const count = selectedConvIds.length;
+    deleteConversations(selectedConvIds);
+    showToast(`${count} conversation${count > 1 ? 's' : ''} deleted successfully`);
+    setSelectedConvIds([]);
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -183,38 +217,123 @@ function ChatContent() {
             showMobileThread ? 'hidden md:flex' : 'flex col-span-12'
           }`}
         >
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <div>
-              <h2 className="font-extrabold text-base text-slate-900 dark:text-white">
-                Messages &amp; Deals
-              </h2>
-              <p className="text-xs text-slate-500">Live chat with sellers, buyers &amp; Porter drivers</p>
+          {/* Top Header: Standard OR Multi-Select Action Bar (Exact OLX Match - Screenshot 2) */}
+          {isSelectionMode ? (
+            <div className="p-3 bg-blue-600 text-white flex items-center justify-between shadow-md transition-all">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className="p-1 hover:bg-blue-700 rounded transition-colors text-white cursor-pointer"
+                  title={selectedConvIds.length === conversations.length ? 'Deselect all' : 'Select all'}
+                >
+                  {selectedConvIds.length === conversations.length ? (
+                    <CheckSquare className="w-5 h-5 text-white" />
+                  ) : (
+                    <div className="w-5 h-5 border-2 border-white rounded flex items-center justify-center">
+                      <span className="w-2.5 h-0.5 bg-white" />
+                    </div>
+                  )}
+                </button>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base leading-none">
+                    {selectedConvIds.length} Chats selected
+                  </h3>
+                  <span className="text-[11px] text-blue-100 font-medium">
+                    {selectedConvIds.length} चैट्स चयनित
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={handleDeleteSelected}
+                  className="p-2 hover:bg-blue-700 rounded-lg transition-colors text-white cursor-pointer"
+                  title="Delete Selected Chats (हटाएं)"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedConvIds([])}
+                  className="p-2 hover:bg-blue-700 rounded-lg transition-colors text-white cursor-pointer"
+                  title="Cancel selection"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold">
-              {conversations.length} Active
-            </span>
-          </div>
+          ) : (
+            <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h2 className="font-extrabold text-base text-slate-900 dark:text-white">
+                  Messages &amp; Deals
+                </h2>
+                <p className="text-xs text-slate-500">Live chat with sellers, buyers &amp; Porter drivers</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedConvIds(conversations.map(c => c.id))}
+                  className="p-1.5 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Select multiple chats to delete"
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  <span className="hidden sm:inline">Select</span>
+                </button>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold">
+                  {conversations.length} Active
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
             {conversations.map(c => {
               const isSelected = c.id === activeConv.id;
+              const isChecked = selectedConvIds.includes(c.id);
               const isDriver = c.deliveryId || c.contactRole?.toLowerCase().includes('driver');
 
               return (
                 <div
                   key={c.id}
-                  onClick={() => selectConversation(c.id)}
-                  className={`p-3.5 sm:p-4 cursor-pointer transition-colors flex items-start gap-3 ${
-                    isSelected
+                  onClick={() => {
+                    if (isSelectionMode) {
+                      setSelectedConvIds(prev =>
+                        prev.includes(c.id) ? prev.filter(i => i !== c.id) : [...prev, c.id]
+                      );
+                    } else {
+                      selectConversation(c.id);
+                    }
+                  }}
+                  className={`p-3 sm:p-3.5 cursor-pointer transition-colors flex items-start gap-2.5 sm:gap-3 ${
+                    isSelected && !isSelectionMode
                       ? 'bg-blue-50/90 dark:bg-blue-950/40 border-l-4 border-blue-600'
+                      : isChecked
+                      ? 'bg-blue-50/50 dark:bg-blue-950/20'
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'
                   }`}
                 >
+                  {/* Selection Checkbox (Visible in Selection Mode or on Hover, OLX Screenshot 2) */}
+                  <button
+                    type="button"
+                    onClick={(e) => toggleSelectConversation(e, c.id)}
+                    className="mt-1 p-0.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex-shrink-0 cursor-pointer"
+                    title={isChecked ? 'Deselect chat' : 'Select chat'}
+                  >
+                    {isChecked ? (
+                      <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                    ) : (
+                      <Square className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 dark:text-slate-600 hover:text-slate-500" />
+                    )}
+                  </button>
+
                   <div className="relative flex-shrink-0">
                     <img
                       src={c.contactAvatar}
                       alt={c.contactName}
-                      className="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
                     />
                     {c.isOnline && (
                       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
@@ -241,19 +360,32 @@ function ChatContent() {
                       )}
                     </div>
 
+                    {c.listingTitle && (
+                      <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {c.listingTitle}
+                      </div>
+                    )}
+
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-snug">
                       {c.lastMessage}
                     </p>
 
-                    {c.listingTitle && (
-                      <span className="inline-block mt-1 text-[10px] text-blue-600 dark:text-blue-400 font-semibold truncate max-w-full">
-                        📌 {c.listingTitle}
-                      </span>
-                    )}
                     {c.deliveryId && (
-                      <span className="inline-block mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-full">
+                      <span className="inline-block mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-full">
                         🚚 Trip #{c.deliveryId}
                       </span>
+                    )}
+
+                    {/* OLX-Style Inactive Advertisement Warning (Exact Screenshot 2 Match) */}
+                    {c.isAdInactive && (
+                      <div className="mt-1 pt-1 border-t border-rose-100 dark:border-rose-950/40 space-y-0.5">
+                        <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400 leading-tight flex items-center gap-1">
+                          <span>⚠️ Ad Inactive &bull; Chat will be removed in {c.chatExpiresInDays ?? 8} days</span>
+                        </div>
+                        <div className="text-[10px] text-rose-500/80 dark:text-rose-400/80 font-medium">
+                          विज्ञापन निष्क्रिय। चैट को {c.chatExpiresInDays ?? 8} दिन में हटा दिया जाएगा
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -381,6 +513,37 @@ function ChatContent() {
                   </Link>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* OLX-Style Inactive Advertisement Warning Alert in Chat */}
+          {(activeConv.isAdInactive || associatedListing?.status === 'EXPIRED') && (
+            <div className="px-4 py-3 bg-rose-50 dark:bg-rose-950/50 border-b border-rose-200 dark:border-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs animate-in fade-in">
+              <div className="flex items-start sm:items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                <div>
+                  <span className="font-bold text-rose-900 dark:text-rose-200">
+                    OLX Policy: Ad Inactive &bull; Chat auto-removal in {activeConv.chatExpiresInDays ?? 8} days
+                  </span>
+                  <p className="text-[10px] text-rose-600/80 dark:text-rose-400/80">
+                    विज्ञापन निष्क्रिय। चैट को {activeConv.chatExpiresInDays ?? 8} दिन में हटा दिया जाएगा
+                  </p>
+                </div>
+              </div>
+
+              {activeConv.listingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    renewListing(activeConv.listingId!);
+                    showToast('Ad renewed for 30 days! Inactive notice cleared.');
+                  }}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 flex-shrink-0 transition-transform hover:scale-105 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Renew Ad (30 Days)</span>
+                </button>
+              )}
             </div>
           )}
 

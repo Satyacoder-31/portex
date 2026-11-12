@@ -32,6 +32,7 @@ import {
   ShoppingBag,
   FileText,
   Settings,
+  Mic,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { UserRole } from '@/types';
@@ -56,6 +57,7 @@ export default function Navbar() {
     openGoogleChooser,
     googleAccounts,
     switchGoogleAccount,
+    openVoiceSearch,
   } = usePortex();
 
   const [selectedCity, setSelectedCity] = useState('Lucknow');
@@ -282,6 +284,15 @@ export default function Navbar() {
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full py-2.5 px-3 bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
               />
+              <button
+                type="button"
+                onClick={() => openVoiceSearch()}
+                className="p-1.5 mr-1 text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer flex items-center gap-1 group/mic"
+                title="Voice Search (Speak in English or Hindi)"
+                aria-label="Voice search"
+              >
+                <Mic className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover/mic:scale-110 transition-transform" />
+              </button>
               <button
                 type="submit"
                 className="mr-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm cursor-pointer"
@@ -599,9 +610,21 @@ export default function Navbar() {
                   placeholder={getSearchPlaceholder(userRole)}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 rounded-xl text-xs border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                  className="w-full pl-9 pr-9 py-2 bg-white dark:bg-slate-800 rounded-xl text-xs border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                   autoFocus
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileSearchOpen(false);
+                    openVoiceSearch();
+                  }}
+                  className="absolute right-2 top-2 p-1 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-lg"
+                  title="Speak search"
+                  aria-label="Voice search"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
               </div>
               <button
                 type="submit"
