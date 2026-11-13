@@ -23,6 +23,7 @@ import {
   INITIAL_REGISTERED_USERS,
   INITIAL_GOOGLE_ACCOUNTS,
   INITIAL_RECENT_SEARCHES,
+  getAutoVehicleForWeight,
 } from '@/lib/data/mockData';
 
 interface IncomingJobRequest {
@@ -48,6 +49,7 @@ interface PortexStoreContextType {
   addListing: (listing: Omit<Listing, 'id' | 'createdAt' | 'views' | 'likes'>) => Listing;
   updateListing: (id: string, partial: Partial<Listing>) => void;
   deleteListing: (id: string) => void;
+  verifyListing: (listingId: string, status: 'APPROVED' | 'REJECTED', overrideVehicle?: DeliveryVehicleType) => void;
 
   favorites: string[];
   toggleFavorite: (listingId: string) => void;
@@ -59,6 +61,9 @@ interface PortexStoreContextType {
     booking: Omit<DeliveryBooking, 'id' | 'trackingNumber' | 'timeline' | 'createdAt' | 'status'>
   ) => DeliveryBooking;
   updateDeliveryStatus: (id: string, newStage: DeliveryStatusStage) => void;
+  updateDeliveryVehicle: (id: string, vehicleType: DeliveryVehicleType) => void;
+  acceptDeliveryJob: (deliveryId: string, driver?: Partial<User>) => void;
+  verifyPickupOtp: (deliveryId: string, enteredOtp: string) => boolean;
   verifyDeliveryOtp: (id: string, otp: string, type: 'pickup' | 'delivery') => boolean;
   completeProofOfDelivery: (id: string, signature: string, photoUrl?: string) => void;
 
@@ -130,7 +135,7 @@ interface PortexStoreContextType {
   businessProfile: BusinessProfile;
   updateBusinessProfile: (profile: Partial<BusinessProfile>) => void;
 
-  // Meesho-Style Voice Search & Recent Searches
+  // Portex Voice Search & Recent Searches
   recentSearches: string[];
   addRecentSearch: (query: string) => void;
   removeRecentSearch: (query: string) => void;
@@ -178,13 +183,24 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [googleAccounts, setGoogleAccounts] = useState<User[]>(INITIAL_GOOGLE_ACCOUNTS);
   const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState<boolean>(false);
 
-  // Meesho-style Voice Search & Recent Searches State
+  // Portex Voice Search & Recent Searches State
   const [recentSearches, setRecentSearches] = useState<string[]>(INITIAL_RECENT_SEARCHES);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
 
   // Restore saved user & registered accounts from localStorage
   useEffect(() => {
     try {
+      // Clear legacy bloated demo cache if not migrated to v2 clean single-entry schema
+      const schemaVer = localStorage.getItem('portex_schema_v2');
+      if (!schemaVer) {
+        localStorage.removeItem('portex_listings');
+        localStorage.removeItem('portex_deliveries');
+        localStorage.removeItem('portex_conversations');
+        localStorage.removeItem('portex_messages');
+        localStorage.removeItem('portex_recent_searches');
+        localStorage.setItem('portex_schema_v2', 'true');
+      }
+
       const savedLoggedIn = localStorage.getItem('portex-is-logged-in');
       if (savedLoggedIn === 'false') {
         setIsLoggedIn(false);
@@ -583,6 +599,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addListing = (item: Omit<Listing, 'id' | 'createdAt' | 'views' | 'likes'>): Listing => {
+    const autoVehicle = getAutoVehicleForWeight(item.weightKg || 3);
     const newListing: Listing = {
       ...item,
       id: `lst-${Date.now()}`,
@@ -590,6 +607,8 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       views: 1,
       likes: 0,
       status: 'ACTIVE',
+      verificationStatus: item.verificationStatus ?? 'PENDING',
+      recommendedVehicle: item.recommendedVehicle ?? autoVehicle.type,
       isFeatured: item.isFeatured ?? true,
     };
     setListings(prev => {
@@ -601,8 +620,33 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       }
       return updated;
     });
-    showToast(`🎉 "${newListing.title.slice(0, 26)}..." is now LIVE on Marketplace!`);
+    showToast(`📝 "${newListing.title.slice(0, 24)}..." submitted! Sent to Admin for verification.`);
     return newListing;
+  };
+
+  const verifyListing = (listingId: string, status: 'APPROVED' | 'REJECTED', overrideVehicle?: DeliveryVehicleType) => {
+    setListings(prev => {
+      const updated = prev.map(l => {
+        if (l.id === listingId) {
+          return {
+            ...l,
+            verificationStatus: status,
+            status: status === 'APPROVED' ? ('ACTIVE' as const) : l.status,
+            ...(overrideVehicle ? { recommendedVehicle: overrideVehicle } : {}),
+          };
+        }
+        return l;
+      });
+      try {
+        localStorage.setItem('portex_listings', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    if (status === 'APPROVED') {
+      showToast('Product verified & approved by Admin! Now live on Marketplace.');
+    } else {
+      showToast('Product rejected by Admin.');
+    }
   };
 
   const updateListing = (id: string, partial: Partial<Listing>) => {
@@ -732,6 +776,57 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       })
     );
     showToast(`Delivery status updated to: ${newStage.replace(/_/g, ' ')}`);
+  };
+
+  const updateDeliveryVehicle = (id: string, vehicleType: DeliveryVehicleType) => {
+    const vehName =
+      vehicleType === 'TWO_WHEELER'
+        ? '2-Wheeler (Express Bike)'
+        : vehicleType === 'THREE_WHEELER_AUTO'
+        ? '3-Wheeler Auto Tempo'
+        : 'Tata Ace (Chota Hathi Mini Truck)';
+
+    setDeliveries(prev =>
+      prev.map(d => (d.id === id ? { ...d, vehicleType, vehicleName: vehName } : d))
+    );
+    showToast(`Admin updated shipping vehicle to: ${vehName}`);
+  };
+
+  const acceptDeliveryJob = (deliveryId: string, driver?: Partial<User>) => {
+    const driverName = driver?.name || 'Mohd. Imran Khan';
+    const driverPhone = driver?.phone || '+91 98390 14592';
+    const driverAvatar =
+      driver?.avatar ||
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80';
+
+    setDeliveries(prev =>
+      prev.map(d => {
+        if (d.id !== deliveryId) return d;
+        const updatedTimeline = d.timeline.map(t => {
+          if (t.stage === 'BOOKING_CREATED') return { ...t, completed: true, active: false };
+          if (t.stage === 'DRIVER_ASSIGNED') return { ...t, title: `Driver Assigned (${driverName})`, time: 'Just now', completed: true, active: true };
+          return t;
+        });
+        return {
+          ...d,
+          driverId: driver?.id || 'drv-301',
+          driverName,
+          driverPhone,
+          driverAvatar,
+          driverRating: 4.9,
+          driverVehiclePlate: 'UP32 EZ 4912',
+          driverVehicleModel: d.vehicleName,
+          status: 'DRIVER_ASSIGNED' as const,
+          timeline: updatedTimeline,
+        };
+      })
+    );
+    setIncomingJob(null);
+    showToast(`Trip accepted! You are assigned as driver. Proceed to pickup.`);
+  };
+
+  const verifyPickupOtp = (deliveryId: string, enteredOtp: string): boolean => {
+    return verifyDeliveryOtp(deliveryId, enteredOtp, 'pickup');
   };
 
   const verifyDeliveryOtp = (id: string, otp: string, type: 'pickup' | 'delivery'): boolean => {
@@ -1149,6 +1244,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         addListing,
         updateListing,
         deleteListing,
+        verifyListing,
         favorites,
         toggleFavorite,
         isFavorite,
@@ -1156,6 +1252,9 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         activeDelivery,
         createDeliveryBooking,
         updateDeliveryStatus,
+        updateDeliveryVehicle,
+        acceptDeliveryJob,
+        verifyPickupOtp,
         verifyDeliveryOtp,
         completeProofOfDelivery,
         conversations,

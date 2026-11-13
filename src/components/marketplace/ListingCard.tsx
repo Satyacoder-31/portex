@@ -43,9 +43,15 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
           {/* Condition & Featured Badges */}
           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap items-center gap-1 sm:gap-1.5">
-            <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border backdrop-blur-md ${cond.bg}`}>
-              {cond.text}
-            </span>
+            {listing.verificationStatus === 'PENDING' ? (
+              <span className="text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-md flex items-center gap-1 animate-pulse">
+                ⏳ Pending Admin Approval
+              </span>
+            ) : (
+              <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border backdrop-blur-md ${cond.bg}`}>
+                {cond.text}
+              </span>
+            )}
             {listing.isFeatured && (
               <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm">
                 FEATURED
@@ -79,11 +85,17 @@ export default function ListingCard({ listing }: ListingCardProps) {
             <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${favorite ? 'fill-current' : ''}`} />
           </button>
 
-          {/* Delivery Ready Ribbon */}
+          {/* Delivery Ready Ribbon with Auto/Admin Vehicle */}
           <div className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 bg-slate-950/85 backdrop-blur-md text-emerald-400 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-md flex items-center gap-1 border border-slate-700/60 max-w-[calc(100%-12px)]">
             <Truck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400 flex-shrink-0" />
-            <span className="truncate hidden xs:inline">Porter Ready ({listing.weightKg}kg)</span>
-            <span className="truncate xs:hidden">{listing.weightKg}kg Porter</span>
+            <span className="truncate">
+              {listing.recommendedVehicle === 'TWO_WHEELER'
+                ? 'Bike'
+                : listing.recommendedVehicle === 'THREE_WHEELER_AUTO'
+                ? 'Auto'
+                : 'Truck'}{' '}
+              &bull; {listing.weightKg}kg
+            </span>
           </div>
         </div>
 

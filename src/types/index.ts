@@ -20,6 +20,7 @@ export type DeliveryStatusStage =
   | 'ITEM_PICKED_UP'
   | 'IN_TRANSIT'
   | 'NEAR_DESTINATION'
+  | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
   | 'CANCELLED';
 
@@ -97,8 +98,11 @@ export interface Listing {
     lng: number;
   };
   weightKg: number;
+  packageWeightKg?: number;
   dimensions: string; // e.g., "60x40x30 cm"
   status: ListingStatus;
+  verificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  recommendedVehicle?: DeliveryVehicleType;
   isFeatured?: boolean;
   createdAt: string;
   expiresAt?: string;
@@ -161,6 +165,14 @@ export interface DeliveryBooking {
   };
   packageType: string;
   packageWeightKg: number;
+  pickupOtp?: string;
+  dropOtp?: string;
+  vehicleNumber?: string;
+  fare?: {
+    total: number;
+    base?: number;
+    perKm?: number;
+  };
   dimensions?: string;
   specialInstructions?: string;
   distanceKm: number;

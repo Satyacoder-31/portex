@@ -8,3 +8,4 @@ export default function GlobalVoiceSearchModal() {
   const { isVoiceModalOpen, closeVoiceSearch } = usePortex();
   return <VoiceSearchModal isOpen={isVoiceModalOpen} onClose={closeVoiceSearch} />;
 }
+

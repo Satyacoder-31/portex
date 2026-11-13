@@ -28,6 +28,7 @@ import {
   ShoppingBag,
   ExternalLink,
   Plus,
+  ShieldCheck,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { ListingCondition } from '@/types';
@@ -260,6 +261,7 @@ export default function PostItemWizard({ onClose }: PostItemWizardProps) {
       weightKg: Number(weightKg) || 3.0,
       dimensions: dimensions || '35 x 25 x 3 cm',
       status: 'ACTIVE',
+      verificationStatus: 'PENDING',
       isFeatured: true,
     });
 
@@ -941,41 +943,31 @@ export default function PostItemWizard({ onClose }: PostItemWizardProps) {
           <div className="text-center py-6 space-y-5 animate-in fade-in">
             {publishedListingId ? (
               <div className="space-y-4">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto shadow-lg">
-                  <CheckCircle2 className="w-10 h-10" />
+                <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto shadow-lg">
+                  <Sparkles className="w-10 h-10" />
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs border border-amber-500/30 mx-auto">
+                  <span>⏳ Awaiting Admin Verification</span>
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                  Product is LIVE on Marketplace! 🚀
+                  Product Submitted for Admin Verification!
                 </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Your product is now published and visible to buyers across the city. Verified buyers can make offers or book Porter delivery right now.
+                  Your product has been submitted and queued for Admin review. As per Portex trust guidelines, once the admin verifies the product and confirms the delivery vehicle, it will automatically go LIVE to buyers in the marketplace!
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
                   <button
                     type="button"
                     onClick={() => {
-                      setUserRole('BUYER');
-                      router.push(`/listings/${publishedListingId}`);
+                      setUserRole('ADMIN');
+                      router.push('/admin');
                       if (onClose) onClose();
                     }}
-                    className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Eye className="w-4 h-4" />
-                    <span>View on Buyer Site (Live Product)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUserRole('BUYER');
-                      router.push('/marketplace');
-                      if (onClose) onClose();
-                    }}
-                    className="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <ShoppingBag className="w-4 h-4" />
-                    <span>Browse All Buyer Marketplace</span>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Open Admin Panel to Verify &amp; Approve</span>
                   </button>
 
                   <button
@@ -987,7 +979,7 @@ export default function PostItemWizard({ onClose }: PostItemWizardProps) {
                     }}
                     className="w-full sm:w-auto px-5 py-3 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-200 cursor-pointer"
                   >
-                    <span>Manage in Seller Studio</span>
+                    <span>Manage in Seller Dashboard</span>
                   </button>
                 </div>
               </div>

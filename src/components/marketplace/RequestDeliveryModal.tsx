@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Truck, MapPin, Package, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, Truck, MapPin, Package, ShieldCheck, CheckCircle2, ArrowRight, CreditCard, Banknote, QrCode } from 'lucide-react';
 import { Listing, DeliveryVehicleType } from '@/types';
 import { usePortex } from '@/lib/store/portexStore';
 import { VEHICLE_OPTIONS } from '@/lib/data/mockData';
@@ -17,15 +17,17 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
   const router = useRouter();
   const { currentUser, createDeliveryBooking } = usePortex();
 
-  // Determine optimal vehicle recommendation from weight
-  const recommendedType: DeliveryVehicleType =
-    listing.weightKg <= 20
+  // Automatic shipping vehicle assignment on the basis of weight (or admin-configured vehicle)
+  const autoVehicleType: DeliveryVehicleType =
+    listing.recommendedVehicle ||
+    (listing.weightKg <= 20
       ? 'TWO_WHEELER'
-      : listing.weightKg <= 400
+      : listing.weightKg <= 500
       ? 'THREE_WHEELER_AUTO'
-      : 'TATA_ACE_MINI_TRUCK';
+      : 'TATA_ACE_MINI_TRUCK');
 
-  const [selectedVehicleType, setSelectedVehicleType] = useState<DeliveryVehicleType>(recommendedType);
+  const [selectedVehicleType, setSelectedVehicleType] = useState<DeliveryVehicleType>(autoVehicleType);
+  const [paymentMethod, setPaymentMethod] = useState<'ONLINE_UPI' | 'CASH_ON_DELIVERY' | 'CARD' | 'NETBANKING' | 'WALLET'>('ONLINE_UPI');
   const [dropAddress, setDropAddress] = useState('E-3/776, Sector-I Aliganj, Lucknow, UP 226024');
   const [contactPhone, setContactPhone] = useState(currentUser.phone);
   const [specialInstructions, setSpecialInstructions] = useState('Handle with care, call on reaching gate.');
@@ -44,6 +46,9 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
   const handleConfirm = () => {
     setIsSubmitting(true);
 
+    const pickupOtp = String(Math.floor(1000 + Math.random() * 9000));
+    const dropOtp = String(Math.floor(1000 + Math.random() * 9000));
+
     const booking = createDeliveryBooking({
       listingId: listing.id,
       listingTitle: listing.title,
@@ -59,7 +64,7 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
         contactPhone: listing.sellerPhone,
         lat: listing.location.lat,
         lng: listing.location.lng,
-        otp: '4921',
+        otp: pickupOtp,
       },
       drop: {
         address: dropAddress,
@@ -68,7 +73,7 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
         contactPhone: contactPhone,
         lat: 26.8854,
         lng: 80.9452,
-        otp: '8302',
+        otp: dropOtp,
       },
       packageType: `${listing.category.toUpperCase()} - ${listing.title.slice(0, 30)}`,
       packageWeightKg: listing.weightKg,
@@ -84,8 +89,8 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
         discount: 0,
         totalAmount,
       },
-      paymentMethod: 'ONLINE_UPI',
-      paymentStatus: 'PAID',
+      paymentMethod,
+      paymentStatus: paymentMethod === 'CASH_ON_DELIVERY' ? 'PENDING' : 'PAID',
     });
 
     setTimeout(() => {
@@ -185,11 +190,16 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
             </div>
           </div>
 
-          {/* Vehicle Selection Carousel / Grid */}
+          {/* Automatic Shipping Vehicle Assignment */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
-              Select Fleet Vehicle (Optimal: {selectedVehicle.name})
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                Shipping Fleet Assignment
+              </label>
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                Automatic based on weight ({listing.weightKg} kg)
+              </span>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {VEHICLE_OPTIONS.slice(0, 3).map(v => (
                 <button
@@ -202,9 +212,9 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
                       : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
-                  {v.type === recommendedType && (
+                  {v.type === autoVehicleType && (
                     <span className="absolute -top-2 right-2 text-[9px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">
-                      Recommended
+                      Auto-Assigned
                     </span>
                   )}
                   <div className="font-bold text-xs text-slate-900 dark:text-white">{v.name}</div>
@@ -212,6 +222,39 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
                   <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1.5">
                     ₹{(v.baseFare + distanceKm * v.perKmRate).toFixed(0)} est.
                   </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Choose Payment Method */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
+              Choose Payment Method
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              {[
+                { id: 'ONLINE_UPI', name: 'Instant UPI / QR', sub: 'PhonePe, GPay, Paytm', icon: QrCode },
+                { id: 'CASH_ON_DELIVERY', name: 'Cash on Delivery', sub: 'Pay on Doorstep Delivery', icon: Banknote },
+                { id: 'CARD', name: 'Debit / Credit Card', sub: 'Visa, Mastercard, RuPay', icon: CreditCard },
+                { id: 'NETBANKING', name: 'Net Banking', sub: 'All Indian Banks', icon: ShieldCheck },
+                { id: 'WALLET', name: 'Portex Wallet', sub: 'Escrow Protected', icon: Package },
+              ].map(pm => (
+                <button
+                  key={pm.id}
+                  type="button"
+                  onClick={() => setPaymentMethod(pm.id as any)}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    paymentMethod === pm.id
+                      ? 'border-blue-500 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold ring-1 ring-blue-500'
+                      : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <pm.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{pm.name}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5 truncate">{pm.sub}</div>
                 </button>
               ))}
             </div>
@@ -245,7 +288,18 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
         {/* Footer CTAs */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
           <div className="text-xs text-slate-500">
-            Payment Mode: <strong className="text-slate-800 dark:text-slate-200">Online UPI / Escrow</strong>
+            Payment Mode:{' '}
+            <strong className="text-slate-800 dark:text-slate-200">
+              {paymentMethod === 'ONLINE_UPI'
+                ? 'Online UPI / QR'
+                : paymentMethod === 'CASH_ON_DELIVERY'
+                ? 'Cash on Delivery (Pay on Doorstep)'
+                : paymentMethod === 'CARD'
+                ? 'Credit / Debit Card'
+                : paymentMethod === 'NETBANKING'
+                ? 'Net Banking'
+                : 'Portex Wallet'}
+            </strong>
           </div>
           <div className="flex items-center gap-2">
             <button
