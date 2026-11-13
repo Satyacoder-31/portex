@@ -137,49 +137,75 @@ export default function TrackingDetailPage() {
           />
 
           {/* Driver Contact & Vehicle Profile Card */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <img
-                src={booking.driverAvatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'}
-                alt={booking.driverName}
-                className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-md"
-              />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                    {booking.driverName}
-                  </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
-                    ⭐ {booking.driverRating || 4.9}
-                  </span>
+          {booking.status === 'BOOKING_CREATED' || !booking.driverName ? (
+            <div className="p-6 bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-950 rounded-3xl border-2 border-amber-500/40 shadow-xl space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <div className="relative w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">
+                    <Truck className="w-6 h-6 animate-pulse" />
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {booking.driverVehicleModel} &bull; <strong className="text-slate-800 dark:text-slate-200">{booking.driverVehiclePlate}</strong>
-                </p>
-                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Portex KYC Verified Driver Partner
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base text-white">
+                      Broadcasting to Nearby Drivers...
+                    </h3>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
+                      Radar Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Pinging {booking.vehicleName} pilots across Lucknow. First driver to accept will be assigned.
+                  </p>
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <img
+                  src={booking.driverAvatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'}
+                  alt={booking.driverName}
+                  className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-md"
+                />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                      {booking.driverName}
+                    </h3>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                      ⭐ {booking.driverRating || 4.9}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {booking.driverVehicleModel} &bull; <strong className="text-slate-800 dark:text-slate-200">{booking.driverVehiclePlate}</strong>
+                  </p>
+                  <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Portex KYC Verified Driver Partner
+                  </div>
+                </div>
+              </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <a
-                href={`tel:${booking.driverPhone}`}
-                className="flex-1 sm:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
-              >
-                <Phone className="w-3.5 h-3.5" />
-                <span>Call Driver</span>
-              </a>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <a
+                  href={`tel:${booking.driverPhone}`}
+                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call Driver</span>
+                </a>
 
-              <Link
-                href={`/chat?deliveryId=${booking.id}`}
-                className="flex-1 sm:flex-initial px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Chat Driver</span>
-              </Link>
+                <Link
+                  href={`/chat?deliveryId=${booking.id}`}
+                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Chat Driver</span>
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column: Status Stepper, OTPs & POD (5 Cols) */}

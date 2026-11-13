@@ -24,6 +24,7 @@ import {
   INITIAL_GOOGLE_ACCOUNTS,
   INITIAL_RECENT_SEARCHES,
   getAutoVehicleForWeight,
+  VEHICLE_OPTIONS,
 } from '@/lib/data/mockData';
 
 interface IncomingJobRequest {
@@ -87,6 +88,8 @@ interface PortexStoreContextType {
   // Driver Partner Mode
   isDriverOnline: boolean;
   setIsDriverOnline: (online: boolean) => void;
+  driverVehicleType: DeliveryVehicleType;
+  setDriverVehicleType: (type: DeliveryVehicleType) => void;
   incomingJob: IncomingJobRequest | null;
   acceptIncomingJob: (jobId: string) => void;
   rejectIncomingJob: () => void;
@@ -98,6 +101,15 @@ interface PortexStoreContextType {
     completedTrips: number;
     rating: number;
   };
+  dispatchProductDelivery: (params: {
+    listingId: string;
+    title: string;
+    price: number;
+    weightKg: number;
+    buyerName?: string;
+    buyerAddress?: string;
+    buyerPhone?: string;
+  }) => DeliveryBooking;
 
   // Theme Management (Light & Dark mode)
   theme: 'light' | 'dark';
@@ -166,9 +178,30 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MESSAGES);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile>(INITIAL_BUSINESS_PROFILE);
   const [isDriverOnline, setIsDriverOnline] = useState<boolean>(true);
+  const [driverVehicleType, setDriverVehicleTypeState] = useState<DeliveryVehicleType>('TWO_WHEELER');
   const [incomingJob, setIncomingJob] = useState<IncomingJobRequest | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [theme, setThemeState] = useState<'light' | 'dark'>('dark');
+
+  // Cross-tab synchronization broadcast helper
+  const broadcastSync = (type: string, payload?: any) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const channel = new BroadcastChannel('portex_sync_hub');
+      channel.postMessage({ type, payload });
+      channel.close();
+    } catch {
+      // ignore
+    }
+  };
+
+  const setDriverVehicleType = (type: DeliveryVehicleType) => {
+    setDriverVehicleTypeState(type);
+    try {
+      localStorage.setItem('portex_driver_vehicle', type);
+    } catch {}
+    showToast(`Driver vehicle set to: ${type.replace(/_/g, ' ')}`);
+  };
 
   // Registered Users Directory (Persisted in localStorage)
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(INITIAL_REGISTERED_USERS);
@@ -240,9 +273,90 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
           setRecentSearches(parsedSearches);
         }
       }
+
+      const savedDriverVeh = localStorage.getItem('portex_driver_vehicle') as DeliveryVehicleType | null;
+      if (savedDriverVeh) {
+        setDriverVehicleTypeState(savedDriverVeh);
+      }
     } catch {
       // ignore
     }
+  }, []);
+
+  // Multi-tab real-time sync listener (BroadcastChannel + storage event)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('portex_sync_hub');
+      channel.onmessage = (event) => {
+        const { type, payload } = event.data || {};
+        if (!type) return;
+
+        if (type === 'NEW_DISPATCH_REQUEST') {
+          if (payload?.booking) {
+            setDeliveries(prev => {
+              if (prev.some(d => d.id === payload.booking.id)) return prev;
+              return [payload.booking, ...prev];
+            });
+          }
+          if (payload?.job) {
+            setIncomingJob(payload.job);
+          }
+        } else if (type === 'DELIVERY_ACCEPTED') {
+          setDeliveries(prev =>
+            prev.map(d => {
+              if (d.id !== payload.deliveryId) return d;
+              return {
+                ...d,
+                status: 'DRIVER_ASSIGNED' as const,
+                driverName: payload.driverName || d.driverName,
+                driverPhone: payload.driverPhone || d.driverPhone,
+                driverVehiclePlate: payload.driverPlate || d.driverVehiclePlate,
+                driverVehicleModel: payload.driverModel || d.driverVehicleModel,
+              };
+            })
+          );
+          setIncomingJob(null);
+        } else if (type === 'STAGE_UPDATED') {
+          if (payload?.id && payload?.stage) {
+            setDeliveries(prev =>
+              prev.map(d => (d.id === payload.id ? { ...d, status: payload.stage } : d))
+            );
+          }
+        } else if (type === 'LISTINGS_UPDATED') {
+          if (payload?.listings) {
+            setListings(payload.listings);
+          }
+        }
+      };
+    } catch {
+      // fallback
+    }
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'portex_deliveries' && e.newValue) {
+        try {
+          setDeliveries(JSON.parse(e.newValue));
+        } catch {}
+      } else if (e.key === 'portex_listings' && e.newValue) {
+        try {
+          setListings(JSON.parse(e.newValue));
+        } catch {}
+      } else if (e.key === 'portex_incoming_dispatch' && e.newValue) {
+        try {
+          setIncomingJob(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      channel?.close();
+      window.removeEventListener('storage', handleStorageEvent);
+    };
   }, []);
 
   const openAuthModal = (
@@ -618,6 +732,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // ignore quota
       }
+      broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
     showToast(`📝 "${newListing.title.slice(0, 24)}..." submitted! Sent to Admin for verification.`);
@@ -640,6 +755,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       try {
         localStorage.setItem('portex_listings', JSON.stringify(updated));
       } catch {}
+      broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
     if (status === 'APPROVED') {
@@ -657,6 +773,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // ignore quota
       }
+      broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
   };
@@ -669,6 +786,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // ignore quota
       }
+      broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
     showToast('Listing removed from your catalog and buyer marketplace.');
@@ -700,49 +818,123 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       id: `del-${Date.now()}`,
       trackingNumber,
       status: 'BOOKING_CREATED',
-      driverId: 'drv-301',
-      driverName: 'Mohd. Imran Khan',
-      driverPhone: '+91 98390 14592',
-      driverAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
-      driverRating: 4.9,
-      driverVehiclePlate: 'UP32 EZ 4912',
-      driverVehicleModel: 'Tata Ace Gold CNG',
-      driverCurrentLocation: { lat: 26.868, lng: 80.965 },
+      driverId: undefined,
+      driverName: undefined,
+      driverPhone: undefined,
+      driverAvatar: undefined,
+      driverRating: undefined,
+      driverVehiclePlate: undefined,
+      driverVehicleModel: undefined,
       timeline: [
-        { stage: 'BOOKING_CREATED', title: 'Booking Confirmed', time: 'Just now', completed: true, active: false },
-        { stage: 'DRIVER_ASSIGNED', title: 'Driver Assigned (Imran Khan)', time: 'In 2 mins', completed: false, active: true },
+        { stage: 'BOOKING_CREATED', title: 'Dispatch Requested (Awaiting Driver)', time: 'Just now', completed: true, active: false },
+        { stage: 'DRIVER_ASSIGNED', title: 'Broadcasting to nearby drivers...', time: 'Pending', completed: false, active: true },
         { stage: 'DRIVER_ARRIVING_PICKUP', title: 'Driver Arriving at Pickup', time: 'Pending', completed: false, active: false },
-        { stage: 'ITEM_PICKED_UP', title: `Item Picked Up (OTP ${booking.pickup.otp})`, time: 'Pending', completed: false, active: false },
+        { stage: 'ITEM_PICKED_UP', title: `Item Picked Up (Pickup OTP: ${booking.pickup.otp})`, time: 'Pending', completed: false, active: false },
         { stage: 'IN_TRANSIT', title: 'In Transit to Destination', time: 'Pending', completed: false, active: false },
         { stage: 'NEAR_DESTINATION', title: 'Near Destination Hub', time: 'Pending', completed: false, active: false },
-        { stage: 'DELIVERED', title: `Delivered & POD Verified (OTP ${booking.drop.otp})`, time: 'Pending', completed: false, active: false },
+        { stage: 'DELIVERED', title: `Delivered & POD Verified (Drop OTP: ${booking.drop.otp})`, time: 'Pending', completed: false, active: false },
       ],
       createdAt: 'Just now',
     };
 
-    setDeliveries(prev => [newBooking, ...prev]);
-    showToast(`Delivery Booked! Tracking ID: ${trackingNumber}`);
+    setDeliveries(prev => {
+      const updated = [newBooking, ...prev];
+      try {
+        localStorage.setItem('portex_deliveries', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
-    // Trigger an incoming dispatch radar simulation for the Driver App
-    setIncomingJob({
+    const incomingJobData: IncomingJobRequest = {
       id: newBooking.id,
       customerName: newBooking.customerName,
-      vehicleType: newBooking.vehicleName,
+      vehicleType: newBooking.vehicleType,
       pickupAddress: newBooking.pickup.address,
       dropAddress: newBooking.drop.address,
       distanceKm: newBooking.distanceKm,
       fareAmount: newBooking.pricing.totalAmount,
       packageType: newBooking.packageType,
       weightKg: newBooking.packageWeightKg,
-      expiresInSec: 45,
-    });
+      expiresInSec: 60,
+    };
+
+    setIncomingJob(incomingJobData);
+    try {
+      localStorage.setItem('portex_incoming_dispatch', JSON.stringify(incomingJobData));
+    } catch {}
+
+    broadcastSync('NEW_DISPATCH_REQUEST', { booking: newBooking, job: incomingJobData });
+    showToast(`🚀 Delivery Dispatched! Tracking: ${trackingNumber}. Broadcasted to drivers.`);
 
     return newBooking;
   };
 
+  const dispatchProductDelivery = (params: {
+    listingId: string;
+    title: string;
+    price: number;
+    weightKg: number;
+    buyerName?: string;
+    buyerAddress?: string;
+    buyerPhone?: string;
+  }): DeliveryBooking => {
+    const autoVeh = getAutoVehicleForWeight(params.weightKg || 3);
+    const selectedVehOption = VEHICLE_OPTIONS.find(v => v.type === autoVeh.type) || VEHICLE_OPTIONS[0];
+    const pickupOtp = String(Math.floor(1000 + Math.random() * 9000));
+    const dropOtp = String(Math.floor(1000 + Math.random() * 9000));
+    const distanceKm = 8.4;
+    const baseFare = selectedVehOption.baseFare;
+    const distanceFare = Number((distanceKm * selectedVehOption.perKmRate).toFixed(1));
+    const totalAmount = baseFare + distanceFare;
+
+    return createDeliveryBooking({
+      listingId: params.listingId,
+      listingTitle: params.title,
+      customerId: 'usr_buyer_99',
+      customerName: params.buyerName || 'Rahul Verma',
+      customerPhone: params.buyerPhone || '+91 98765 11223',
+      vehicleType: autoVeh.type,
+      vehicleName: autoVeh.name,
+      pickup: {
+        address: currentUser.marketplaceProfile?.sellerPickupAddress || 'E-3/776, Sector-I Aliganj, Lucknow, UP',
+        city: 'Lucknow',
+        contactName: currentUser.name || 'Store Seller',
+        contactPhone: currentUser.phone || '+91 97654 32109',
+        lat: 26.8854,
+        lng: 80.9452,
+        otp: pickupOtp,
+      },
+      drop: {
+        address: params.buyerAddress || 'Flat 402, Royal Palms, Gomti Nagar Extension, Lucknow',
+        city: 'Lucknow',
+        contactName: params.buyerName || 'Rahul Verma',
+        contactPhone: params.buyerPhone || '+91 98765 11223',
+        lat: 26.8505,
+        lng: 81.0065,
+        otp: dropOtp,
+      },
+      packageType: `Sold Goods: ${params.title}`,
+      packageWeightKg: params.weightKg,
+      dimensions: '50 x 35 x 30 cm',
+      specialInstructions: 'Handle with care. Doorstep Porter logistics dispatch.',
+      distanceKm,
+      durationMins: 24,
+      pricing: {
+        baseFare,
+        distanceFare,
+        weightSurcharge: 0,
+        gstAmount: Number((totalAmount * 0.18).toFixed(1)),
+        discount: 0,
+        totalAmount: Number((totalAmount * 1.18).toFixed(1)),
+      },
+      paymentMethod: 'ONLINE_UPI',
+      paymentStatus: 'PAID',
+    });
+  };
+
   const updateDeliveryStatus = (id: string, newStage: DeliveryStatusStage) => {
-    setDeliveries(prev =>
-      prev.map(item => {
+    setDeliveries(prev => {
+      const updated = prev.map(item => {
         if (item.id !== id) return item;
 
         const stageOrder: DeliveryStatusStage[] = [
@@ -773,8 +965,13 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
           status: newStage,
           timeline: updatedTimeline,
         };
-      })
-    );
+      });
+      try {
+        localStorage.setItem('portex_deliveries', JSON.stringify(updated));
+      } catch {}
+      broadcastSync('STAGE_UPDATED', { id, stage: newStage });
+      return updated;
+    });
     showToast(`Delivery status updated to: ${newStage.replace(/_/g, ' ')}`);
   };
 
@@ -786,43 +983,91 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         ? '3-Wheeler Auto Tempo'
         : 'Tata Ace (Chota Hathi Mini Truck)';
 
-    setDeliveries(prev =>
-      prev.map(d => (d.id === id ? { ...d, vehicleType, vehicleName: vehName } : d))
-    );
+    setDeliveries(prev => {
+      const updated = prev.map(d => (d.id === id ? { ...d, vehicleType, vehicleName: vehName } : d));
+      try {
+        localStorage.setItem('portex_deliveries', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     showToast(`Admin updated shipping vehicle to: ${vehName}`);
   };
 
   const acceptDeliveryJob = (deliveryId: string, driver?: Partial<User>) => {
-    const driverName = driver?.name || 'Mohd. Imran Khan';
-    const driverPhone = driver?.phone || '+91 98390 14592';
+    const driverName = driver?.name || currentUser.name || 'Mohd. Imran Khan';
+    const driverPhone = driver?.phone || currentUser.phone || '+91 98390 14592';
     const driverAvatar =
       driver?.avatar ||
+      currentUser.avatar ||
       'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80';
 
-    setDeliveries(prev =>
-      prev.map(d => {
+    const driverPlate =
+      (driver as any)?.vehiclePlate ||
+      (driverVehicleType === 'TWO_WHEELER'
+        ? 'UP32 EZ 1024'
+        : driverVehicleType === 'THREE_WHEELER_AUTO'
+        ? 'UP32 AT 8841'
+        : 'UP32 EZ 4912');
+
+    const driverModel =
+      (driver as any)?.vehicleModel ||
+      (driverVehicleType === 'TWO_WHEELER'
+        ? '2-Wheeler (Hero Nyx Cargo Bike)'
+        : driverVehicleType === 'THREE_WHEELER_AUTO'
+        ? '3-Wheeler Auto (Bajaj Maxima)'
+        : 'Tata Ace Gold CNG');
+
+    let tripFare = 350;
+
+    setDeliveries(prev => {
+      const updated = prev.map(d => {
         if (d.id !== deliveryId) return d;
+        tripFare = d.pricing?.totalAmount || d.fare?.total || 350;
         const updatedTimeline = d.timeline.map(t => {
           if (t.stage === 'BOOKING_CREATED') return { ...t, completed: true, active: false };
           if (t.stage === 'DRIVER_ASSIGNED') return { ...t, title: `Driver Assigned (${driverName})`, time: 'Just now', completed: true, active: true };
+          if (t.stage === 'DRIVER_ARRIVING_PICKUP') return { ...t, time: 'Arriving in 6 mins', active: true };
           return t;
         });
         return {
           ...d,
-          driverId: driver?.id || 'drv-301',
+          driverId: driver?.id || currentUser.id || 'drv-301',
           driverName,
           driverPhone,
           driverAvatar,
-          driverRating: 4.9,
-          driverVehiclePlate: 'UP32 EZ 4912',
-          driverVehicleModel: d.vehicleName,
+          driverRating: 4.95,
+          driverVehiclePlate: driverPlate,
+          driverVehicleModel: driverModel,
           status: 'DRIVER_ASSIGNED' as const,
           timeline: updatedTimeline,
         };
-      })
-    );
+      });
+      try {
+        localStorage.setItem('portex_deliveries', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    setDriverEarnings(prev => ({
+      ...prev,
+      today: prev.today + tripFare,
+      completedTrips: prev.completedTrips + 1,
+    }));
+
     setIncomingJob(null);
-    showToast(`Trip accepted! You are assigned as driver. Proceed to pickup.`);
+    try {
+      localStorage.removeItem('portex_incoming_dispatch');
+    } catch {}
+
+    broadcastSync('DELIVERY_ACCEPTED', {
+      deliveryId,
+      driverName,
+      driverPhone,
+      driverPlate,
+      driverModel,
+    });
+
+    showToast(`Trip accepted! Assigned to you with ${driverModel}. Proceed to pickup.`);
   };
 
   const verifyPickupOtp = (deliveryId: string, enteredOtp: string): boolean => {
@@ -1264,11 +1509,14 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         getOrCreateConversation,
         isDriverOnline,
         setIsDriverOnline,
+        driverVehicleType,
+        setDriverVehicleType,
         incomingJob,
         acceptIncomingJob,
         rejectIncomingJob,
         triggerIncomingJobRadar,
         driverEarnings,
+        dispatchProductDelivery,
         businessProfile,
         updateBusinessProfile,
         toastMessage,

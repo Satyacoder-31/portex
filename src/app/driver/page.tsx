@@ -23,6 +23,7 @@ import {
   Package,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
+import confetti from 'canvas-confetti';
 
 export default function DriverDashboardPage() {
   const {
@@ -30,6 +31,12 @@ export default function DriverDashboardPage() {
     setIsDriverOnline,
     driverEarnings,
     deliveries,
+    driverVehicleType,
+    setDriverVehicleType,
+    incomingJob,
+    acceptIncomingJob,
+    rejectIncomingJob,
+    currentUser,
     updateDeliveryStatus,
     acceptDeliveryJob,
     verifyPickupOtp,
@@ -41,32 +48,59 @@ export default function DriverDashboardPage() {
   const [activeTab, setActiveTab] = useState<'trips' | 'earnings' | 'vehicle' | 'kyc'>('trips');
   const [pickupOtpInput, setPickupOtpInput] = useState('');
   const [dropOtpInput, setDropOtpInput] = useState('');
+  const [filterMyVehicleOnly, setFilterMyVehicleOnly] = useState<boolean>(true);
 
-  // Default driver profile
+  // Dynamic driver profile adapting to active vehicle
   const driverProfile = {
-    id: 'drv-imran',
-    name: 'Mohd. Imran Khan',
-    phone: '+91 94150 99999',
-    vehicleNumber: 'UP32 EZ 4912',
-    vehicleType: 'TATA_ACE_MINI_TRUCK' as const,
+    id: currentUser.id || 'drv-imran',
+    name: currentUser.name || 'Mohd. Imran Khan',
+    phone: currentUser.phone || '+91 94150 99999',
+    vehicleNumber:
+      driverVehicleType === 'TWO_WHEELER'
+        ? 'UP32 EZ 1024'
+        : driverVehicleType === 'THREE_WHEELER_AUTO'
+        ? 'UP32 AT 8841'
+        : 'UP32 EZ 4912',
+    vehicleModel:
+      driverVehicleType === 'TWO_WHEELER'
+        ? '2-Wheeler (Hero Nyx Cargo)'
+        : driverVehicleType === 'THREE_WHEELER_AUTO'
+        ? '3-Wheeler Auto (Bajaj Maxima)'
+        : 'Tata Ace Gold CNG',
+    vehicleType: driverVehicleType,
   };
 
   // Open broadcast jobs waiting for any driver to accept
-  const broadcastJobs = deliveries.filter(
+  const allBroadcastJobs = deliveries.filter(
     d =>
       (d.status === 'BOOKING_CREATED' || !d.driverId) &&
       d.status !== 'DELIVERED' &&
       d.status !== 'CANCELLED'
   );
 
-  // Active trip assigned to this driver or active in pipeline
+  // Filter jobs matching the driver's vehicle
+  const broadcastJobs = allBroadcastJobs.filter(d => {
+    if (!filterMyVehicleOnly) return true;
+    if (driverVehicleType === 'TWO_WHEELER') return d.vehicleType === 'TWO_WHEELER';
+    if (driverVehicleType === 'THREE_WHEELER_AUTO') {
+      return d.vehicleType === 'THREE_WHEELER_AUTO' || d.vehicleType === 'ELECTRIC_CARGO';
+    }
+    return (
+      d.vehicleType === 'TATA_ACE_MINI_TRUCK' ||
+      d.vehicleType === 'PICKUP_8FT' ||
+      d.vehicleType === 'EICHER_14FT'
+    );
+  });
+
+  // Active trip assigned to this driver
   const activeTrip =
     deliveries.find(
       d =>
         (d.driverId === driverProfile.id ||
           d.driverName === driverProfile.name ||
-          (d.status !== 'DELIVERED' && d.status !== 'BOOKING_CREATED')) &&
-        d.status !== 'DELIVERED'
+          (d.driverId && d.status !== 'BOOKING_CREATED')) &&
+        d.status !== 'DELIVERED' &&
+        d.status !== 'CANCELLED'
     ) || null;
 
   const handleAcceptJob = (jobId: string) => {
@@ -75,7 +109,7 @@ export default function DriverDashboardPage() {
       name: driverProfile.name,
       phone: driverProfile.phone,
     });
-    showToast('Dispatch Job Accepted! You are assigned as the driver.');
+    showToast(`Dispatch Job Accepted! Assigned to you with ${driverProfile.vehicleModel}.`);
   };
 
   const handleVerifyPickup = () => {
@@ -122,19 +156,41 @@ export default function DriverDashboardPage() {
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black">Mohd. Imran Khan</h1>
+              <h1 className="text-xl font-black">{driverProfile.name}</h1>
               <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> Verified Partner
+                <ShieldCheck className="w-3.5 h-3.5" /> Verified Pilot Partner
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Tata Ace Gold CNG &bull; UP32 EZ 4912 &bull; Portex Platinum Tier
+              Active Vehicle: <strong className="text-amber-400">{driverProfile.vehicleModel}</strong> &bull; Plate: <span className="font-mono text-slate-200 font-bold">{driverProfile.vehicleNumber}</span> &bull; Portex Platinum Tier
             </p>
           </div>
         </div>
 
-        {/* Online / Offline Switch & Test Dispatch Radar Ping */}
-        <div className="flex items-center gap-3">
+        {/* Vehicle Switcher & Online / Offline Switch */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-2xl border border-slate-800">
+            <span className="text-[10px] font-bold text-slate-400 px-2 uppercase">My Vehicle:</span>
+            {(['TWO_WHEELER', 'THREE_WHEELER_AUTO', 'TATA_ACE_MINI_TRUCK'] as const).map(vType => {
+              const isSelected = driverVehicleType === vType;
+              const label = vType === 'TWO_WHEELER' ? '🏍️ 2-Wheeler' : vType === 'THREE_WHEELER_AUTO' ? '🛺 3-Wheeler' : '🚚 Tata Ace';
+              return (
+                <button
+                  key={vType}
+                  type="button"
+                  onClick={() => setDriverVehicleType(vType)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-500 text-black shadow-sm font-black'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
           <button
             type="button"
             onClick={triggerIncomingJobRadar}
@@ -175,6 +231,61 @@ export default function DriverDashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* POPUP: Incoming Ride Request Notification Banner (When incomingJob matches driver's vehicle) */}
+      {isDriverOnline && incomingJob && (
+        <div className="p-6 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-slate-900 rounded-3xl border-2 border-amber-500 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-black flex items-center justify-center font-black">
+                  <Radio className="w-6 h-6 animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs uppercase tracking-wider font-mono font-black text-amber-400">
+                    🚨 INCOMING RIDE REQUEST FOR YOUR {incomingJob.vehicleType?.replace(/_/g, ' ')}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-black font-extrabold">
+                    ₹{incomingJob.fareAmount} PAYOUT
+                  </span>
+                </div>
+                <h3 className="text-base font-black text-white mt-1">
+                  {incomingJob.packageType}
+                </h3>
+                <div className="text-xs text-slate-300 flex items-center gap-4 mt-1 flex-wrap">
+                  <span>📍 From: <strong className="text-white">{incomingJob.pickupAddress}</strong></span>
+                  <span>🎯 To: <strong className="text-white">{incomingJob.dropAddress}</strong></span>
+                  <span>📦 {incomingJob.weightKg} kg &bull; {incomingJob.distanceKm} km</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  handleAcceptJob(incomingJob.id);
+                  confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+                }}
+                className="py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2 cursor-pointer transition-transform hover:scale-105"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>ACCEPT RIDE (₹{incomingJob.fareAmount})</span>
+              </button>
+              <button
+                type="button"
+                onClick={rejectIncomingJob}
+                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* KPI Earnings Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -225,10 +336,10 @@ export default function DriverDashboardPage() {
         </div>
       </div>
 
-      {/* SECTION: LIVE BROADCAST DISPATCH RADAR (Open Orders for all drivers) */}
-      {isDriverOnline && broadcastJobs.length > 0 && (
+      {/* SECTION: LIVE BROADCAST DISPATCH RADAR */}
+      {isDriverOnline && (
         <div className="p-6 bg-gradient-to-br from-blue-950/60 to-slate-900 rounded-3xl border-2 border-blue-500/40 shadow-2xl space-y-4 animate-in fade-in">
-          <div className="flex items-center justify-between pb-3 border-b border-blue-500/30">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-500/30">
             <div className="flex items-center gap-3">
               <span className="relative flex h-3.5 w-3.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -238,82 +349,129 @@ export default function DriverDashboardPage() {
                 <h2 className="text-base font-black text-white flex items-center gap-2">
                   <span>Broadcast Dispatch Radar</span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-400/30">
-                    {broadcastJobs.length} Open Request{broadcastJobs.length > 1 ? 's' : ''}
+                    {broadcastJobs.length} Request{broadcastJobs.length !== 1 ? 's' : ''} for {driverProfile.vehicleModel}
                   </span>
                 </h2>
                 <p className="text-xs text-blue-200/80">
-                  Broadcasted to all active fleet drivers. First driver to accept gets assigned to the delivery.
+                  Requests automatically dispatched to matching vehicles across Lucknow. First pilot to accept gets assigned.
                 </p>
               </div>
             </div>
-            <span className="text-xs font-mono font-bold text-amber-400">
-              Live Dispatch Feed
-            </span>
+
+            {/* Filter Toggle */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setFilterMyVehicleOnly(true)}
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                  filterMyVehicleOnly
+                    ? 'bg-blue-600 text-white font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                My Vehicle Only ({broadcastJobs.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterMyVehicleOnly(false)}
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                  !filterMyVehicleOnly
+                    ? 'bg-blue-600 text-white font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                All Fleet ({allBroadcastJobs.length})
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {broadcastJobs.map(job => (
-              <div
-                key={job.id}
-                className="p-5 bg-slate-900/90 rounded-2xl border border-blue-500/30 space-y-4 hover:border-blue-400 transition-colors shadow-lg"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <span className="text-[10px] font-mono text-blue-400 font-bold block">
-                      {job.trackingNumber}
-                    </span>
-                    <h3 className="font-extrabold text-sm text-white mt-0.5">
-                      {job.packageType}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-semibold">
-                        {job.vehicleType === 'TWO_WHEELER'
-                          ? '🏍️ 2-Wheeler Bike'
-                          : job.vehicleType === 'THREE_WHEELER_AUTO'
-                          ? '🛺 3-Wheeler Auto'
-                          : '🚚 Tata Ace Mini Truck'}
+          {broadcastJobs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {broadcastJobs.map(job => (
+                <div
+                  key={job.id}
+                  className="p-5 bg-slate-900/90 rounded-2xl border border-blue-500/30 space-y-4 hover:border-blue-400 transition-colors shadow-lg"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-mono text-blue-400 font-bold block">
+                        {job.trackingNumber}
                       </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono">
-                        Weight: {job.packageWeightKg || 2.5} kg
-                      </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold">
-                        {job.distanceKm} km
+                      <h3 className="font-extrabold text-sm text-white mt-0.5">
+                        {job.packageType}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-semibold">
+                          {job.vehicleType === 'TWO_WHEELER'
+                            ? '🏍️ 2-Wheeler Bike'
+                            : job.vehicleType === 'THREE_WHEELER_AUTO'
+                            ? '🛺 3-Wheeler Auto'
+                            : '🚚 Tata Ace Mini Truck'}
+                        </span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono">
+                          Weight: {job.packageWeightKg || 2.5} kg
+                        </span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold">
+                          {job.distanceKm} km
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Driver Payout</span>
+                      <span className="text-lg font-black text-emerald-400">
+                        ₹{(job.fare?.total || job.pricing?.totalAmount || 380).toLocaleString('en-IN')}
                       </span>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Driver Payout</span>
-                    <span className="text-lg font-black text-emerald-400">
-                      ₹{(job.fare?.total || job.pricing?.totalAmount || 380).toLocaleString('en-IN')}
-                    </span>
+                  <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                      <span className="text-slate-400">Pickup:</span>
+                      <span className="font-semibold text-white truncate">{job.pickup.address}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+                      <span className="text-slate-400">Drop:</span>
+                      <span className="font-semibold text-white truncate">{job.drop.address}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-400">Pickup:</span>
-                    <span className="font-semibold text-white truncate">{job.pickup.address}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
-                    <span className="text-slate-400">Drop:</span>
-                    <span className="font-semibold text-white truncate">{job.drop.address}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAcceptJob(job.id)}
+                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>ACCEPT RIDE (₹{(job.fare?.total || job.pricing?.totalAmount || 380).toLocaleString('en-IN')})</span>
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleAcceptJob(job.id)}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01]"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Accept Delivery Job (Assign to Me)</span>
-                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-slate-950/40 rounded-2xl border border-dashed border-slate-800 space-y-3">
+              <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-40" />
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <Radio className="w-5 h-5 animate-pulse" />
+                </div>
               </div>
-            ))}
-          </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">
+                  Radar Active for {driverProfile.vehicleModel}
+                </h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto mt-0.5">
+                  Listening for deliveries dispatched across Lucknow. When an order matches your vehicle, it will alert here in real time.
+                </p>
+                {allBroadcastJobs.length > 0 && (
+                  <p className="text-xs text-amber-400 font-medium mt-2">
+                    💡 There are {allBroadcastJobs.length} ride requests for other vehicles. Tap above vehicle buttons or click &quot;All Fleet&quot; to inspect.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

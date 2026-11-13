@@ -37,6 +37,7 @@ import {
   Shield,
   Star,
   Wrench,
+  Radio,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { UserRole } from '@/types';
@@ -183,19 +184,51 @@ export function PersonaSwitcherBar() {
  * daily earnings, completed trip logs, vehicle specs & Lucknow high surge zones.
  */
 export function DriverHomeView() {
-  const { isDriverOnline, setIsDriverOnline, driverEarnings, showToast } = usePortex();
-  const [hasAcceptedSample, setHasAcceptedSample] = useState(false);
+  const {
+    isDriverOnline,
+    setIsDriverOnline,
+    driverEarnings,
+    deliveries,
+    driverVehicleType,
+    setDriverVehicleType,
+    acceptDeliveryJob,
+    updateDeliveryStatus,
+    verifyPickupOtp,
+    verifyDeliveryOtp,
+    showToast,
+  } = usePortex();
+
+  const [pickupOtpInput, setPickupOtpInput] = useState('');
+  const [dropOtpInput, setDropOtpInput] = useState('');
+
+  // Open broadcast jobs waiting for drivers
+  const broadcastJobs = deliveries.filter(
+    d => (d.status === 'BOOKING_CREATED' || !d.driverId) && d.status !== 'DELIVERED' && d.status !== 'CANCELLED'
+  );
+
+  // Check matching jobs for driver's active vehicle
+  const matchingJobs = broadcastJobs.filter(d => {
+    if (driverVehicleType === 'TWO_WHEELER') return d.vehicleType === 'TWO_WHEELER';
+    if (driverVehicleType === 'THREE_WHEELER_AUTO') return d.vehicleType === 'THREE_WHEELER_AUTO' || d.vehicleType === 'ELECTRIC_CARGO';
+    return d.vehicleType === 'TATA_ACE_MINI_TRUCK' || d.vehicleType === 'PICKUP_8FT' || d.vehicleType === 'EICHER_14FT';
+  });
+
+  // Current active trip assigned to driver
+  const activeTrip = deliveries.find(
+    d => d.driverId && d.status !== 'DELIVERED' && d.status !== 'CANCELLED'
+  );
+
   const [completedTrips, setCompletedTrips] = useState([
     {
       id: 'PRTX-8491',
       pickup: 'Warehouse 4, Transport Nagar',
       drop: 'Hazratganj Main Market',
-      vehicle: 'Tata Ace Gold',
-      cargo: 'Carton Electronics (450 kg)',
+      vehicle: '2-Wheeler Hero Cargo',
+      cargo: 'Laptop & Electronics Box',
       time: '10:45 AM',
-      distance: '12.4 km',
-      fare: 380,
-      paymentMethod: 'CASH_COLLECTED',
+      distance: '6.4 km',
+      fare: 180,
+      paymentMethod: 'ONLINE_ESCROW',
       rating: 5.0,
     },
     {
@@ -210,58 +243,35 @@ export function DriverHomeView() {
       paymentMethod: 'ONLINE_ESCROW',
       rating: 5.0,
     },
-    {
-      id: 'PRTX-8472',
-      pickup: 'Charbagh Railway Cargo Terminal',
-      drop: 'Indira Nagar Sector 14',
-      vehicle: 'Tata Ace Gold',
-      cargo: 'Machinery Spares & Belts',
-      time: '03:30 PM',
-      distance: '9.8 km',
-      fare: 420,
-      paymentMethod: 'ONLINE_ESCROW',
-      rating: 4.9,
-    },
-    {
-      id: 'PRTX-8450',
-      pickup: 'Talkatora Industrial Area',
-      drop: 'Vikas Nagar Central Road',
-      vehicle: 'Tata Ace Gold',
-      cargo: 'Plastic Raw Material Crates',
-      time: '05:10 PM',
-      distance: '14.1 km',
-      fare: 500,
-      paymentMethod: 'ONLINE_ESCROW',
-      rating: 5.0,
-    },
   ]);
 
-  const handleAcceptJob = () => {
-    setHasAcceptedSample(true);
+  const handleAcceptJob = (jobId: string) => {
+    acceptDeliveryJob(jobId);
     confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
-    showToast('Trip Accepted! GPS Navigation route to Transport Nagar is loaded.');
   };
 
-  const handleCompleteCurrentTrip = () => {
-    setHasAcceptedSample(false);
-    confetti({ particleCount: 80, spread: 80, origin: { y: 0.5 } });
-    showToast('Trip Marked DELIVERED! ₹480 credited to your Pilot Wallet.');
-    // Add to completed list
-    setCompletedTrips(prev => [
-      {
-        id: 'PRTX-8499',
-        pickup: 'Warehouse 4, Transport Nagar',
-        drop: 'Gomti Nagar Extension, Sec 4',
-        vehicle: 'Tata Ace Gold',
-        cargo: 'Electronics Carton Boxes',
-        time: 'Just now',
-        distance: '8.2 km',
-        fare: 480,
-        paymentMethod: 'ONLINE_ESCROW',
-        rating: 5.0,
-      },
-      ...prev,
-    ]);
+  const handleVerifyPickup = () => {
+    if (!activeTrip) return;
+    if (!pickupOtpInput || pickupOtpInput.length !== 4) {
+      showToast('Please enter the 4-digit Pickup OTP provided by the seller.');
+      return;
+    }
+    const success = verifyPickupOtp(activeTrip.id, pickupOtpInput);
+    if (success) {
+      setPickupOtpInput('');
+    }
+  };
+
+  const handleVerifyDrop = () => {
+    if (!activeTrip) return;
+    if (!dropOtpInput || dropOtpInput.length !== 4) {
+      showToast('Please enter the 4-digit Delivery OTP provided by the buyer.');
+      return;
+    }
+    const success = verifyDeliveryOtp(activeTrip.id, dropOtpInput, 'delivery');
+    if (success) {
+      setDropOtpInput('');
+    }
   };
 
   return (
@@ -293,39 +303,69 @@ export function DriverHomeView() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Lucknow Transport Hub &bull; Vehicle: <span className="font-mono text-amber-300 font-bold">UP 32 EN 4920</span> &bull; 1 Helper Attached
+                Lucknow Transport Hub &bull; Fleet: <span className="font-mono text-amber-300 font-bold">
+                  {driverVehicleType === 'TWO_WHEELER'
+                    ? 'Hero Nyx Cargo (2-Wheeler)'
+                    : driverVehicleType === 'THREE_WHEELER_AUTO'
+                    ? 'Bajaj Maxima (3-Wheeler)'
+                    : 'Tata Ace Gold CNG (Mini Truck)'}
+                </span> &bull; 1 Helper Attached
               </p>
             </div>
           </div>
 
-          {/* Duty Status Toggle */}
-          <div className="flex items-center gap-4 bg-slate-900/90 p-2.5 rounded-2xl border border-slate-800">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                Duty Status
-              </span>
-              <span
-                className={`text-xs font-black ${isDriverOnline ? 'text-emerald-400' : 'text-slate-400'}`}
-              >
-                {isDriverOnline ? 'ONLINE (Receiving Trips)' : 'OFFLINE (Paused)'}
-              </span>
+          {/* Vehicle Switcher & Duty Status Toggle */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-2xl border border-slate-800">
+              <span className="text-[10px] font-bold text-slate-400 px-2 uppercase">My Vehicle:</span>
+              {(['TWO_WHEELER', 'THREE_WHEELER_AUTO', 'TATA_ACE_MINI_TRUCK'] as const).map(vType => {
+                const isSelected = driverVehicleType === vType;
+                const label = vType === 'TWO_WHEELER' ? '🏍️ 2-Wheeler' : vType === 'THREE_WHEELER_AUTO' ? '🛺 3-Wheeler' : '🚚 Tata Ace';
+                return (
+                  <button
+                    key={vType}
+                    type="button"
+                    onClick={() => setDriverVehicleType(vType)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-500 text-black shadow-sm font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setIsDriverOnline(!isDriverOnline);
-                showToast(isDriverOnline ? 'You went OFFLINE' : 'You are now ONLINE! Ready for trips.');
-              }}
-              className={`py-2 px-4 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                isDriverOnline
-                  ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              <Power className="w-4 h-4" />
-              <span>{isDriverOnline ? 'GO OFFLINE' : 'GO ONLINE'}</span>
-            </button>
+            <div className="flex items-center gap-3 bg-slate-900/90 p-2 rounded-2xl border border-slate-800">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Duty Status
+                </span>
+                <span
+                  className={`text-xs font-black ${isDriverOnline ? 'text-emerald-400' : 'text-slate-400'}`}
+                >
+                  {isDriverOnline ? 'ONLINE (Ready)' : 'OFFLINE (Paused)'}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDriverOnline(!isDriverOnline);
+                  showToast(isDriverOnline ? 'You went OFFLINE' : 'You are now ONLINE! Ready for trips.');
+                }}
+                className={`py-2 px-4 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isDriverOnline
+                    ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <Power className="w-4 h-4" />
+                <span>{isDriverOnline ? 'GO OFFLINE' : 'GO ONLINE'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -378,128 +418,196 @@ export function DriverHomeView() {
               <span className="text-xs text-slate-500 font-semibold">Auto-refreshing &bull; 5s ago</span>
             </div>
 
-            {!hasAcceptedSample ? (
-              /* Incoming Job Offer Card */
-              <div className="p-5 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent dark:bg-slate-900 rounded-3xl border-2 border-amber-500/40 shadow-xl space-y-4 animate-in fade-in">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-3">
+            {activeTrip ? (
+              /* Active Trip In Progress Card */
+              <div className="p-5 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950 rounded-3xl border-2 border-emerald-500/50 shadow-xl space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-emerald-500/20">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black">
                       <Truck className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-slate-900 dark:text-white">
-                          Tata Ace (Chota Hathi) Booking
-                        </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">
-                          ₹480 FARE
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-500">Shipper: Amit Sharma (Electronics Carton Boxes)</span>
-                    </div>
-                  </div>
-
-                  <div className="text-left sm:text-right">
-                    <span className="text-[11px] font-black text-amber-600 dark:text-amber-400 block">
-                      8.2 KM &bull; ~22 Mins
-                    </span>
-                    <span className="text-[10px] text-slate-500">1 Helper Included (+₹100)</span>
-                  </div>
-                </div>
-
-                {/* Route Path */}
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0" />
-                    <span className="font-bold text-slate-900 dark:text-white">Pickup:</span>
-                    <span className="text-slate-600 dark:text-slate-300 truncate">
-                      Warehouse 4, Transport Nagar, Kanpur Road, Lucknow
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-3 h-3 rounded-full bg-rose-500 flex-shrink-0" />
-                    <span className="font-bold text-slate-900 dark:text-white">Drop:</span>
-                    <span className="text-slate-600 dark:text-slate-300 truncate">
-                      Gomti Nagar Extension, Sector 4, Lucknow (2nd Floor Lift)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleAcceptJob}
-                    className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01]"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>ACCEPT TRIP (₹480 FARE)</span>
-                  </button>
-                  <Link
-                    href="/driver"
-                    className="px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors"
-                  >
-                    Cockpit Map &rarr;
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              /* Active Trip In Progress Card */
-              <div className="p-5 bg-emerald-50 dark:bg-emerald-950/20 rounded-3xl border-2 border-emerald-500/50 shadow-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    <div>
-                      <h3 className="font-black text-sm text-emerald-950 dark:text-emerald-300">
-                        Active Trip: PRTX-8499 (Amit Sharma)
+                      <h3 className="font-black text-sm text-white">
+                        Active Trip: #{activeTrip.trackingNumber}
                       </h3>
-                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                        En Route to Pickup &bull; Warehouse 4, Transport Nagar
+                      <p className="text-[11px] text-emerald-400">
+                        {activeTrip.packageType} &bull; {activeTrip.vehicleName}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-3 py-1 rounded-full border border-emerald-500/30">
-                    ₹480 EARNINGS
+                  <span className="text-sm font-black text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
+                    ₹{(activeTrip.pricing?.totalAmount || 350).toLocaleString('en-IN')} FARE
                   </span>
                 </div>
 
-                {/* Progress Visualizer */}
-                <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                    <span className="flex items-center gap-1.5 text-emerald-600">
-                      <Navigation className="w-4 h-4 animate-spin" /> Arriving in 6 mins
-                    </span>
-                    <span>Distance: 2.1 km to dock</span>
+                {/* Route Path */}
+                <div className="space-y-2 text-xs bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                    <span className="font-bold text-slate-400">Pickup:</span>
+                    <span className="text-white truncate font-medium">{activeTrip.pickup.address}</span>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full w-[45%]" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-400 flex-shrink-0" />
+                    <span className="font-bold text-slate-400">Drop:</span>
+                    <span className="text-white truncate font-medium">{activeTrip.drop.address}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-1">
+                {/* OTP Exchange Action */}
+                {activeTrip.status !== 'ITEM_PICKED_UP' && activeTrip.status !== 'IN_TRANSIT' && activeTrip.status !== 'DELIVERED' ? (
+                  <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-500/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-300">
+                        Step 1: Pick Up Cargo from Sender
+                      </span>
+                      <span className="text-[10px] text-slate-400">Sender: {activeTrip.pickup.contactName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        maxLength={4}
+                        placeholder="4-digit Pickup OTP"
+                        value={pickupOtpInput}
+                        onChange={(e) => setPickupOtpInput(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono font-bold text-white text-center focus:border-amber-400 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyPickup}
+                        className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md cursor-pointer"
+                      >
+                        Verify Pickup OTP
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-300">
+                        Step 2: Deliver Cargo to Buyer
+                      </span>
+                      <span className="text-[10px] text-slate-400">Buyer: {activeTrip.drop.contactName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        maxLength={4}
+                        placeholder="4-digit Delivery OTP"
+                        value={dropOtpInput}
+                        onChange={(e) => setDropOtpInput(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono font-bold text-white text-center focus:border-emerald-400 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyDrop}
+                        className="py-2 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-md cursor-pointer"
+                      >
+                        Verify Delivery OTP &amp; Complete
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-1">
                   <Link
-                    href="/driver"
-                    className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
+                    href={`/tracking/${activeTrip.id}`}
+                    className="flex-1 py-2.5 text-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md"
                   >
-                    <Navigation className="w-3.5 h-3.5" />
-                    <span>Open Turn-by-Turn GPS Map</span>
+                    Open Live GPS Tracking &rarr;
                   </Link>
-
-                  <button
-                    type="button"
-                    onClick={handleCompleteCurrentTrip}
-                    className="py-2.5 px-4 bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer"
-                  >
-                    Verify OTP &amp; Complete Trip
-                  </button>
-
                   <a
-                    href="tel:+919876543210"
-                    className="py-2.5 px-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1"
+                    href={`tel:${activeTrip.pickup.contactPhone}`}
+                    className="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1"
                   >
                     <Phone className="w-3.5 h-3.5" />
-                    <span>Call Shipper</span>
+                    <span>Call</span>
                   </a>
+                </div>
+              </div>
+            ) : matchingJobs.length > 0 ? (
+              /* Incoming Broadcast Rides Matching Driver's Vehicle */
+              <div className="space-y-3">
+                {matchingJobs.map(job => (
+                  <div
+                    key={job.id}
+                    className="p-5 bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-950 rounded-3xl border-2 border-amber-500/50 shadow-2xl space-y-4 animate-in fade-in"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
+                          <Truck className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-black text-white">
+                              {job.packageType}
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              {job.vehicleType === 'TWO_WHEELER'
+                                ? '🏍️ 2-Wheeler'
+                                : job.vehicleType === 'THREE_WHEELER_AUTO'
+                                ? '🛺 3-Wheeler'
+                                : '🚚 Tata Ace'}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-400">Shipper: {job.customerName} &bull; {job.packageWeightKg} kg</span>
+                        </div>
+                      </div>
+
+                      <div className="text-left sm:text-right">
+                        <span className="text-sm font-black text-emerald-400 block">
+                          ₹{(job.pricing?.totalAmount || job.fare?.total || 350).toLocaleString('en-IN')} FARE
+                        </span>
+                        <span className="text-[10px] text-slate-400">{job.distanceKm} km &bull; Doorstep</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-400">Pickup:</span>
+                        <span className="font-semibold text-white truncate">{job.pickup.address}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+                        <span className="text-slate-400">Drop:</span>
+                        <span className="font-semibold text-white truncate">{job.drop.address}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAcceptJob(job.id)}
+                      className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01]"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>ACCEPT RIDE (₹{(job.pricing?.totalAmount || 350).toLocaleString('en-IN')} FARE)</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Radar Idle State */
+              <div className="p-8 bg-slate-900/60 rounded-3xl border border-slate-800 text-center space-y-3">
+                <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-40" />
+                  <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                    <Radio className="w-5 h-5 animate-pulse" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white">
+                    Radar Active for {driverVehicleType === 'TWO_WHEELER' ? '2-Wheeler (Express Bike)' : driverVehicleType === 'THREE_WHEELER_AUTO' ? '3-Wheeler Auto' : 'Tata Ace Mini Truck'}
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto mt-0.5">
+                    Listening for buyer purchases &amp; seller dispatches across Lucknow. New requests will alert here instantly.
+                  </p>
+                  {broadcastJobs.length > 0 && (
+                    <p className="text-[11px] text-amber-400/90 font-medium mt-2">
+                      💡 {broadcastJobs.length} ride request(s) open for other vehicle types. Switch vehicle above to view.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -1122,9 +1230,8 @@ export function EnterpriseHomeView() {
  */
 export function SellerHomeView() {
   const router = useRouter();
-  const { listings, currentUser, showToast, setUserRole, deleteListing } = usePortex();
-  const [hasAcceptedOffer1, setHasAcceptedOffer1] = useState(false);
-  const [hasAcceptedOffer2, setHasAcceptedOffer2] = useState(false);
+  const { listings, currentUser, showToast, setUserRole, deleteListing, dispatchProductDelivery } = usePortex();
+  const [hasDispatchedId, setHasDispatchedId] = useState<string | null>(null);
 
   const myListings = listings.filter(l => l.sellerId === currentUser.id || l.sellerName === currentUser.name);
 
@@ -1182,27 +1289,29 @@ export function SellerHomeView() {
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
             <span className="text-[10px] font-bold text-slate-300 uppercase block">Active Products</span>
             <div className="text-lg font-black text-white mt-0.5">{myListings.length} Live</div>
-            <span className="text-[10px] text-emerald-400 font-semibold">Indexed on Buyer Site</span>
+            <span className="text-[10px] text-emerald-400 font-semibold">{myListings.length > 0 ? 'Indexed on Buyer Site' : 'No items yet'}</span>
           </div>
 
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
             <span className="text-[10px] font-bold text-slate-300 uppercase block">Product Views</span>
             <div className="text-lg font-black text-blue-400 mt-0.5">
-              {myListings.reduce((acc, l) => acc + (l.views || 0), 0) || 780} Views
+              {myListings.reduce((acc, l) => acc + (l.views || 0), 0)} Views
             </div>
-            <span className="text-[10px] text-slate-400 font-semibold">Active Inquiries</span>
+            <span className="text-[10px] text-slate-400 font-semibold">{myListings.length > 0 ? 'Active Inquiries' : 'No views'}</span>
           </div>
 
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
             <span className="text-[10px] font-bold text-slate-300 uppercase block">Escrow Balance</span>
-            <div className="text-lg font-black text-emerald-400 mt-0.5">₹24,500.00</div>
+            <div className="text-lg font-black text-emerald-400 mt-0.5">
+              ₹{myListings.length > 0 ? (myListings[0].price * 0.9).toLocaleString('en-IN') : '0.00'}
+            </div>
             <span className="text-[10px] text-slate-400 font-semibold">Auto-released on delivery</span>
           </div>
 
           <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
             <span className="text-[10px] font-bold text-slate-300 uppercase block">Buyer Negotiations</span>
-            <div className="text-lg font-black text-amber-400 mt-0.5">2 Pending</div>
-            <span className="text-[10px] text-amber-300 font-semibold">Review offers below</span>
+            <div className="text-lg font-black text-amber-400 mt-0.5">{myListings.length > 0 ? '1 Pending' : '0 Pending'}</div>
+            <span className="text-[10px] text-amber-300 font-semibold">{myListings.length > 0 ? 'Review offer below' : 'No pending offers'}</span>
           </div>
         </div>
       </div>
@@ -1350,29 +1459,47 @@ export function SellerHomeView() {
         <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-blue-600" />
+              <MessageSquare className="w-4 h-4 text-amber-500" />
               <h3 className="font-black text-sm text-slate-900 dark:text-white">
                 Buyer Price Offers Awaiting Approval
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600">
-              Action Required
-            </span>
+            {myListings.length > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                1 Offer Pending
+              </span>
+            )}
           </div>
 
-          {/* Offer 1 */}
-          {!hasAcceptedOffer1 ? (
+          {myListings.length === 0 ? (
+            <div className="p-6 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 space-y-2">
+              <MessageSquare className="w-8 h-8 mx-auto text-slate-400" />
+              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                No buyer offers yet
+              </h4>
+              <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                You haven&apos;t added any products to your catalog yet. Once you post your products, buyer negotiations and price offers will appear here.
+              </p>
+              <Link
+                href="/sell"
+                className="inline-flex items-center gap-1.5 px-4 py-2 mt-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-black font-extrabold text-xs rounded-xl shadow-sm"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>+ Add Product to Sell</span>
+              </Link>
+            </div>
+          ) : (
             <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-xs text-slate-900 dark:text-white">
-                    Sony Bravia 55&quot; 4K Smart TV
+                  <h4 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">
+                    {myListings[0].title}
                   </h4>
-                  <p className="text-[10px] text-slate-500">Asking Price: ₹18,000</p>
+                  <p className="text-[10px] text-slate-500">Asking Price: ₹{myListings[0].price.toLocaleString('en-IN')}</p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block">
-                    Offer: ₹15,500
+                    Offer: ₹{Math.round(myListings[0].price * 0.9).toLocaleString('en-IN')}
                   </span>
                   <span className="text-[10px] text-slate-400">By Rahul Verma</span>
                 </div>
@@ -1382,71 +1509,20 @@ export function SellerHomeView() {
                 <button
                   type="button"
                   onClick={() => {
-                    setHasAcceptedOffer1(true);
                     confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
-                    showToast('Offer Accepted! Buyer Rahul Verma notified to pay via Escrow.');
+                    showToast(`Offer of ₹${Math.round(myListings[0].price * 0.9).toLocaleString('en-IN')} accepted! Buyer Rahul Verma notified.`);
                   }}
                   className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
                 >
-                  Accept Offer (₹15,500)
+                  Accept Offer (₹{Math.round(myListings[0].price * 0.9).toLocaleString('en-IN')})
                 </button>
                 <Link
-                  href="/chat?conv=conv-1"
+                  href="/chat"
                   className="py-2 px-3 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold"
                 >
                   Chat / Counter
                 </Link>
               </div>
-            </div>
-          ) : (
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/30 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-              <span>Offer ₹15,500 accepted! Deal reserved for Rahul Verma.</span>
-              <Link href="/deliver" className="font-bold underline">Dispatch Courier</Link>
-            </div>
-          )}
-
-          {/* Offer 2 */}
-          {!hasAcceptedOffer2 ? (
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-xs text-slate-900 dark:text-white">
-                    Vintage Teakwood Armchair
-                  </h4>
-                  <p className="text-[10px] text-slate-500">Asking Price: ₹6,500</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block">
-                    Offer: ₹5,800
-                  </span>
-                  <span className="text-[10px] text-slate-400">By Ananya Roy</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setHasAcceptedOffer2(true);
-                    confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
-                    showToast('Offer Accepted! Buyer Ananya Roy notified to pay via Escrow.');
-                  }}
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
-                >
-                  Accept Offer (₹5,800)
-                </button>
-                <Link
-                  href="/chat?conv=conv-3"
-                  className="py-2 px-3 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold"
-                >
-                  Chat / Counter
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/30 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-              <span>Offer ₹5,800 accepted! Deal reserved for Ananya Roy.</span>
-              <Link href="/deliver" className="font-bold underline">Dispatch Courier</Link>
             </div>
           )}
         </div>
@@ -1460,46 +1536,77 @@ export function SellerHomeView() {
                 Dispatch Sold Goods to Buyers
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
               Doorstep Porter
             </span>
           </div>
 
-          <div className="p-4 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/20 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-900 dark:text-white">Solid Teakwood Coffee Table</span>
-              <span className="text-emerald-600 font-black">Sold for ₹4,200</span>
+          {myListings.length === 0 ? (
+            <div className="p-6 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 space-y-2">
+              <Truck className="w-8 h-8 mx-auto text-slate-400" />
+              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                No sold goods awaiting dispatch
+              </h4>
+              <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                Once a buyer completes payment or agrees on price, 1-click Porter delivery dispatch will appear here to assign matching 2-wheelers, 3-wheelers, or mini trucks.
+              </p>
             </div>
-            <p className="text-[11px] text-slate-500">
-              Buyer Address: Royal Palms, Gomti Nagar Extension. Ready for courier pickup!
-            </p>
+          ) : (
+            <div className="p-4 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/20 space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white line-clamp-1">
+                    {myListings[0].title}
+                  </h4>
+                  <span className="text-[10px] text-slate-500">Weight: {myListings[0].weightKg} kg &bull; Buyer: Rahul Verma (Gomti Nagar)</span>
+                </div>
+                <span className="text-emerald-600 font-black">₹{myListings[0].price.toLocaleString('en-IN')}</span>
+              </div>
 
-            <Link
-              href="/deliver?cargo=Teakwood+Coffee+Table"
-              className="mt-2 w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
-            >
-              <Truck className="w-4 h-4" />
-              <span>Call Porter Pickup for Buyer &rarr;</span>
-            </Link>
-          </div>
+              <div className="p-2.5 rounded-xl bg-slate-950/40 border border-emerald-500/20 flex items-center justify-between">
+                <span className="text-[11px] text-slate-300">
+                  Recommended Fleet: <strong className="text-amber-400 font-bold">
+                    {myListings[0].weightKg <= 20
+                      ? '🏍️ 2-Wheeler (Express Bike)'
+                      : myListings[0].weightKg <= 500
+                      ? '🛺 3-Wheeler Auto'
+                      : '🚚 Tata Ace Mini Truck'}
+                  </strong>
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                  Auto-Calculated
+                </span>
+              </div>
 
-          <div className="p-4 bg-blue-50/40 dark:bg-blue-950/20 rounded-2xl border border-blue-500/20 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-900 dark:text-white">Dell XPS 15 (Touch OLED)</span>
-              <span className="text-blue-600 font-black">Sold for ₹48,000</span>
+              {hasDispatchedId === myListings[0].id ? (
+                <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs font-bold flex items-center justify-between">
+                  <span>🚀 Dispatched! Broadcast sent to matching drivers.</span>
+                  <Link href="/tracking" className="underline text-amber-400 font-black">Live Tracking &rarr;</Link>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    dispatchProductDelivery({
+                      listingId: myListings[0].id,
+                      title: myListings[0].title,
+                      price: myListings[0].price,
+                      weightKg: myListings[0].weightKg,
+                      buyerName: 'Rahul Verma',
+                      buyerAddress: 'Flat 402, Royal Palms, Gomti Nagar Extension, Lucknow',
+                    });
+                    setHasDispatchedId(myListings[0].id);
+                    confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+                    showToast(`🚀 Dispatched "${myListings[0].title.slice(0, 20)}"! Driver notification sent.`);
+                  }}
+                  className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer transition-all hover:scale-[1.01]"
+                >
+                  <Truck className="w-4 h-4" />
+                  <span>Call Porter Dispatch for Buyer &rarr;</span>
+                </button>
+              )}
             </div>
-            <p className="text-[11px] text-slate-500">
-              Buyer Address: Sector 14, Indira Nagar. High-value parcel packaging ready.
-            </p>
-
-            <Link
-              href="/deliver?cargo=Dell+XPS+Laptop"
-              className="mt-2 w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
-            >
-              <Truck className="w-4 h-4" />
-              <span>Dispatch 2-Wheeler Express Courier &rarr;</span>
-            </Link>
-          </div>
+          )}
         </div>
 
       </div>

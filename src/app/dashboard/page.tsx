@@ -250,7 +250,7 @@ function DashboardContent() {
       case 'SELLER':
         return [
           { id: 'listings', label: `Store Catalog (${myListings.length})` },
-          { id: 'offers', label: 'Buyer Price Offers (2)' },
+          { id: 'offers', label: `Buyer Price Offers (${myListings.length > 0 ? 1 : 0})` },
           { id: 'payouts', label: 'Escrow UPI Payouts' },
           { id: 'profile', label: 'Store & Pickup Setup' },
         ];
@@ -667,20 +667,36 @@ function DashboardContent() {
             Buyer Price Negotiations &amp; Offers
           </h3>
           
-          {!hasAcceptedNegotiation ? (
+          {myListings.length === 0 ? (
+            <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 space-y-3">
+              <MessageSquare className="w-10 h-10 mx-auto text-slate-400" />
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                No buyer price offers yet
+              </h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                You currently have no products listed for sale. Post your first product to start receiving buyer inquiries and offers.
+              </p>
+              <Link
+                href="/sell"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                <span>+ Post Your First Product</span>
+              </Link>
+            </div>
+          ) : !hasAcceptedNegotiation ? (
             <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h4 className="font-bold text-xs text-slate-900 dark:text-white">
-                  Sony Bravia 55&quot; 4K Ultra HD Smart TV
+                <h4 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">
+                  {myListings[0].title}
                 </h4>
                 <p className="text-[11px] text-slate-500">
-                  Listed Price: ₹18,000 &bull; Offer from: <strong>Rahul Verma</strong>
+                  Listed Price: ₹{myListings[0].price.toLocaleString('en-IN')} &bull; Offer from: <strong>Rahul Verma</strong>
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
                 <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                  ₹15,500 Offered
+                  ₹{Math.round(myListings[0].price * 0.9).toLocaleString('en-IN')} Offered
                 </span>
                 <button
                   type="button"
