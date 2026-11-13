@@ -18,6 +18,7 @@ import android.provider.MediaStore;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String APP_URL = "https://portex-theta.vercel.app";
     private static final int REQUEST_LOCATION_PERMISSION = 101;
     private static final int REQUEST_FILE_CHOOSER = 102;
+    private static final int REQUEST_AUDIO_PERMISSION = 103;
 
     private WebView webView;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private Uri mCameraPhotoUri;
     private GeolocationPermissions.Callback mGeoCallback;
     private String mGeoOrigin;
+    private PermissionRequest mAudioPermissionRequest;
 
     private long backPressedTime = 0;
     private Toast exitToast;
@@ -306,6 +309,33 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
+        public void onPermissionRequest(final PermissionRequest request) {
+            runOnUiThread(() -> {
+                String[] requestedResources = request.getResources();
+                boolean needsAudio = false;
+                for (String r : requestedResources) {
+                    if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) {
+                        needsAudio = true;
+                        break;
+                    }
+                }
+
+                if (needsAudio) {
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                        mAudioPermissionRequest = request;
+                        ActivityCompat.requestPermissions(MainActivity.this,
+                                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS},
+                                REQUEST_AUDIO_PERMISSION);
+                    } else {
+                        request.grant(request.getResources());
+                    }
+                } else {
+                    request.grant(request.getResources());
+                }
+            });
+        }
+
+        @Override
         public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
             if (mFilePathCallback != null) {
                 mFilePathCallback.onReceiveValue(null);
@@ -396,6 +426,18 @@ public class MainActivity extends AppCompatActivity {
             }
             mGeoCallback = null;
             mGeoOrigin = null;
+        } else if (requestCode == REQUEST_AUDIO_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (mAudioPermissionRequest != null) {
+                    mAudioPermissionRequest.grant(mAudioPermissionRequest.getResources());
+                }
+            } else {
+                if (mAudioPermissionRequest != null) {
+                    mAudioPermissionRequest.deny();
+                }
+                Toast.makeText(MainActivity.this, "Microphone permission is required for voice search", Toast.LENGTH_SHORT).show();
+            }
+            mAudioPermissionRequest = null;
         }
     }
 
