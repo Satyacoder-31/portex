@@ -256,12 +256,12 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden p-6 space-y-5 text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-[#0e0e13] rounded-3xl shadow-2xl border border-amber-500/30 overflow-hidden p-6 space-y-5 text-center text-white">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition-colors"
           aria-label="Close Voice Search"
         >
           <X className="w-5 h-5" />
@@ -270,19 +270,19 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
         {/* SCREEN 1: PERMISSION REQUEST PROMPT */}
         {(permissionState === 'PROMPT' || permissionState === 'REQUESTING') && (
           <div className="py-2 space-y-5 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto border border-blue-500/20 shadow-md">
-              <Mic className="w-8 h-8 animate-pulse" />
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30 shadow-lg shadow-amber-500/20">
+              <Mic className="w-8 h-8 animate-pulse text-amber-400" />
             </div>
 
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-xs font-bold">
-                <ShieldCheck className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
                 <span>Microphone Permission</span>
               </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white">
+              <h3 className="text-xl font-black text-white">
                 Enable Voice Search
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-zinc-400 max-w-sm mx-auto leading-relaxed">
                 Portex uses your microphone to transcribe your spoken search queries into product and cargo searches in real time.
               </p>
             </div>
@@ -292,16 +292,16 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
                 type="button"
                 onClick={handleRequestPermission}
                 disabled={permissionState === 'REQUESTING'}
-                className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/25 transition-transform hover:scale-105 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 text-black rounded-xl text-xs font-black shadow-lg shadow-amber-500/30 transition-transform hover:scale-105 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Mic className="w-4 h-4" />
+                <Mic className="w-4 h-4 text-black" />
                 <span>{permissionState === 'REQUESTING' ? 'Requesting Access...' : 'Allow Microphone Access'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPermissionState('GRANTED')}
-                className="w-full sm:w-auto px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold"
+                className="w-full sm:w-auto px-4 py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs font-semibold border border-zinc-800"
               >
                 Skip to Voice Mode
               </button>
@@ -312,28 +312,28 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
         {/* SCREEN 2: PERMISSION BLOCKED / DENIED (WITH INSTANT UNBLOCK GUIDE & FALLBACK SEARCH) */}
         {permissionState === 'DENIED' && (
           <div className="py-2 space-y-4 text-left">
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60">
-              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex-shrink-0">
+            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 flex-shrink-0">
                 <MicOff className="w-5 h-5" />
               </div>
               <div className="space-y-0.5">
-                <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                <h4 className="text-xs font-bold text-amber-300">
                   Microphone is Blocked in Browser Settings
                 </h4>
-                <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                <p className="text-[11px] text-amber-200/70">
                   Your browser address bar has microphone permissions toggled off for this site.
                 </p>
               </div>
             </div>
 
             {/* Step-by-Step Instructions Card */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-2.5">
-              <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <HelpCircle className="w-4 h-4 text-blue-500" />
+            <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs space-y-2.5">
+              <div className="font-bold text-zinc-200 flex items-center gap-1.5">
+                <HelpCircle className="w-4 h-4 text-amber-400" />
                 <span>How to Allow Microphone in 10 seconds:</span>
               </div>
 
-              <ol className="list-decimal list-inside space-y-1.5 text-slate-600 dark:text-slate-400 text-[11px]">
+              <ol className="list-decimal list-inside space-y-1.5 text-zinc-400 text-[11px]">
                 <li>
                   Look at the <strong>top address bar</strong> of your browser (next to the URL).
                 </li>
@@ -352,7 +352,7 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
                 <button
                   type="button"
                   onClick={handleRequestPermission}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5"
+                  className="px-4 py-2 bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-xl text-xs font-black shadow-md flex items-center gap-1.5"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Retry Microphone</span>
@@ -361,7 +361,7 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
                 <button
                   type="button"
                   onClick={handleResetPermission}
-                  className="px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold"
+                  className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold"
                 >
                   Reset Settings
                 </button>
@@ -370,7 +370,7 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
 
             {/* Instant Fallback Query Input */}
             <div className="space-y-2 pt-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
                 Or Search Directly by Typing:
               </span>
               <div className="flex gap-2">
@@ -380,12 +380,12 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
                   onChange={e => setManualInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSearchSuccess(manualInput)}
                   placeholder="e.g. MacBook Pro, Tata Ace, Courier..."
-                  className="flex-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400"
                 />
                 <button
                   type="button"
                   onClick={() => handleSearchSuccess(manualInput)}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                  className="px-4 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-xl text-xs font-black"
                 >
                   Search
                 </button>
@@ -399,16 +399,16 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
           <div className="space-y-5">
             {/* Header */}
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-xs font-bold mb-2">
-                <Mic className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold mb-2">
+                <Mic className="w-3.5 h-3.5 text-amber-400" />
                 <span>Portex Voice Search</span>
               </div>
 
-              <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
+              <h3 className="text-xl font-black text-white">
                 {isListening ? 'Listening to your voice...' : 'Tap Mic to Speak'}
               </h3>
 
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Speak any item, vehicle, or cargo requirement in English or Hindi
               </p>
             </div>
@@ -417,8 +417,8 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
             <div className="relative flex items-center justify-center py-2">
               {isListening && (
                 <>
-                  <span className="absolute w-36 h-36 rounded-full bg-blue-500/20 animate-ping" />
-                  <span className="absolute w-28 h-28 rounded-full bg-blue-500/30 animate-pulse" />
+                  <span className="absolute w-36 h-36 rounded-full bg-amber-500/20 animate-ping" />
+                  <span className="absolute w-28 h-28 rounded-full bg-amber-500/30 animate-pulse" />
                 </>
               )}
 
@@ -431,32 +431,32 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
                     startSpeechRecognition();
                   }
                 }}
-                className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all cursor-pointer ${
+                className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center shadow-2xl transition-all cursor-pointer ${
                   isListening
-                    ? 'bg-gradient-to-tr from-blue-700 to-indigo-600 text-white scale-110 shadow-blue-500/40 ring-4 ring-blue-300/40'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30'
+                    ? 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 text-black scale-110 shadow-amber-500/40 ring-4 ring-amber-300/40'
+                    : 'bg-gradient-to-tr from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 text-black shadow-amber-500/30'
                 }`}
               >
-                {isListening ? <Mic className="w-9 h-9 animate-bounce" /> : <Mic className="w-9 h-9" />}
+                {isListening ? <Mic className="w-9 h-9 animate-bounce text-black" /> : <Mic className="w-9 h-9 text-black" />}
               </button>
             </div>
 
             {/* Transcript Display */}
-            <div className="min-h-[48px] flex items-center justify-center px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-sm font-semibold">
+            <div className="min-h-[48px] flex items-center justify-center px-4 py-2.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-white text-sm font-semibold">
               {transcript ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-600 font-bold">"{transcript}"</span>
+                  <span className="text-amber-400 font-bold">"{transcript}"</span>
                   <button
                     type="button"
                     onClick={() => handleSearchSuccess(transcript)}
-                    className="px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg shadow flex items-center gap-1"
+                    className="px-2.5 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-xs font-black rounded-lg shadow flex items-center gap-1"
                   >
                     <span>Search</span>
-                    <ArrowRight className="w-3 h-3" />
+                    <ArrowRight className="w-3 h-3 text-black" />
                   </button>
                 </div>
               ) : (
-                <span className="text-slate-400 text-xs italic">
+                <span className="text-zinc-500 text-xs italic">
                   {isListening ? 'Speak now... (e.g. "MacBook Pro" or "Tata Ace")' : errorMsg || 'Microphone is ready. Tap to speak.'}
                 </span>
               )}
@@ -464,15 +464,15 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
 
             {/* Language Switcher */}
             <div className="flex items-center justify-center gap-2 text-xs">
-              <Languages className="w-4 h-4 text-slate-400" />
-              <span className="text-slate-500 font-medium">Language:</span>
+              <Languages className="w-4 h-4 text-zinc-400" />
+              <span className="text-zinc-400 font-medium">Language:</span>
               <button
                 type="button"
                 onClick={() => setSelectedLanguage('en-IN')}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
                   selectedLanguage === 'en-IN'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black shadow-sm'
+                    : 'bg-zinc-900 text-zinc-400 hover:text-white'
                 }`}
               >
                 English (India)
@@ -482,8 +482,8 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
                 onClick={() => setSelectedLanguage('hi-IN')}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
                   selectedLanguage === 'hi-IN'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black shadow-sm'
+                    : 'bg-zinc-900 text-zinc-400 hover:text-white'
                 }`}
               >
                 हिंदी (Hindi)
@@ -493,9 +493,9 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
         )}
 
         {/* Quick Search Suggestions (Always accessible at the bottom) */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-left">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-500" /> Tap to search instantly:
+        <div className="pt-2 border-t border-zinc-800 text-left">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 block mb-2 flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-amber-400" /> Tap to search instantly:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {[
@@ -513,7 +513,7 @@ export default function VoiceSearchModal({ isOpen, onClose, onSelectQuery }: Voi
                   setTranscript(item);
                   setTimeout(() => handleSearchSuccess(item), 300);
                 }}
-                className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 dark:hover:text-blue-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 hover:text-amber-300 text-zinc-300 rounded-xl text-xs font-medium border border-zinc-800 hover:border-amber-500/40 transition-colors cursor-pointer"
               >
                 🎤 {item}
               </button>

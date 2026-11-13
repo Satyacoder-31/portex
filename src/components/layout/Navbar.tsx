@@ -163,33 +163,33 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 transition-all shadow-sm w-full max-w-full overflow-x-clip">
+      <header className="sticky top-0 z-50 bg-[#09090b]/95 backdrop-blur-2xl border-b border-amber-500/20 transition-all shadow-xl shadow-black/60 w-full max-w-full overflow-x-clip">
         {/* Top Micro Utility Bar (Desktop only) */}
-        <div className="hidden lg:flex items-center justify-between text-[11px] py-1 px-4 sm:px-8 bg-slate-900 text-slate-300 border-b border-slate-800">
+        <div className="hidden lg:flex items-center justify-between text-[11px] py-1 px-4 sm:px-8 bg-[#060608] text-amber-200/80 border-b border-amber-500/15">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="flex items-center gap-1.5 text-amber-400 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               PORTEX Hyperlocal Logistics Network Live
             </span>
-            <span className="text-slate-600">&bull;</span>
-            <span className="text-slate-400">Escrow Payment Protection &bull; Instant Porter Mini Truck Dispatch</span>
+            <span className="text-zinc-600">&bull;</span>
+            <span className="text-zinc-400">Escrow Payment Protection &bull; Instant Porter Mini Truck Dispatch</span>
           </div>
 
           <div className="flex items-center gap-4">
             <button
               onClick={handleInstallApp}
-              className="flex items-center gap-1 text-slate-300 hover:text-white font-medium transition-colors"
+              className="flex items-center gap-1 text-zinc-300 hover:text-amber-300 font-medium transition-colors"
             >
-              <Smartphone className="w-3.5 h-3.5 text-blue-400" />
+              <Smartphone className="w-3.5 h-3.5 text-amber-400" />
               <span>Install Mobile App</span>
             </button>
-            <span className="text-slate-700">|</span>
+            <span className="text-zinc-700">|</span>
             <Link href="/driver" className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
               <Truck className="w-3.5 h-3.5" />
               <span>Driver Partner Mode</span>
             </Link>
-            <span className="text-slate-700">|</span>
-            <Link href="/admin" className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1">
+            <span className="text-zinc-700">|</span>
+            <Link href="/admin" className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
               <Building2 className="w-3.5 h-3.5" />
               <span>Admin &amp; GST Settings</span>
             </Link>
@@ -203,27 +203,27 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="md:hidden p-1.5 sm:p-2 rounded-xl text-zinc-300 hover:bg-zinc-800 transition-colors"
               aria-label="Open navigation menu"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-5 h-5 text-amber-400" />
             </button>
 
             {/* Brand Logo */}
             <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-300 text-black flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-amber-500/30 group-hover:scale-105 transition-transform flex-shrink-0">
                 P
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <span className="font-black text-lg sm:text-2xl tracking-tight text-slate-900 dark:text-white">
-                    PORT<span className="text-blue-600 dark:text-blue-400">EX</span>
+                  <span className="font-black text-lg sm:text-2xl tracking-tight text-white">
+                    PORT<span className="text-amber-400">EX</span>
                   </span>
-                  <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hidden sm:inline">
+                  <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 hidden sm:inline">
                     PRO
                   </span>
                 </div>
-                <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium -mt-1 hidden lg:block tracking-wide">
+                <p className="text-[9px] text-amber-200/60 font-medium -mt-1 hidden lg:block tracking-wide">
                   Marketplace + Porter Logistics
                 </p>
               </div>
@@ -233,11 +233,11 @@ export default function Navbar() {
             <div className="relative" ref={cityDropdownRef}>
               <button
                 onClick={() => setShowCityDropdown(!showCityDropdown)}
-                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200/80 dark:border-slate-700/60"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-100 text-xs font-bold transition-all border border-amber-500/30 hover:border-amber-400"
               >
-                <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                 <span className="truncate max-w-[65px] sm:max-w-[110px]">{selectedCity}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                <ChevronDown className="w-3 h-3 text-amber-400/70 flex-shrink-0" />
               </button>
 
               {showCityDropdown && (
@@ -274,28 +274,28 @@ export default function Navbar() {
           <div className="hidden md:flex flex-1 max-w-lg lg:max-w-xl mx-2">
             <form
               onSubmit={handleSearchSubmit}
-              className="w-full flex items-center bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all overflow-hidden"
+              className="w-full flex items-center bg-zinc-950/90 rounded-2xl border border-amber-500/30 focus-within:border-amber-400 focus-within:ring-4 focus-within:ring-amber-500/10 transition-all overflow-hidden"
             >
-              <Search className="w-4 h-4 ml-3.5 text-slate-400 flex-shrink-0" />
+              <Search className="w-4 h-4 ml-3.5 text-amber-400/80 flex-shrink-0" />
               <input
                 type="text"
                 placeholder={getSearchPlaceholder(userRole)}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full py-2.5 px-3 bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+                className="w-full py-2.5 px-3 bg-transparent text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => openVoiceSearch()}
-                className="p-1.5 mr-1 text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer flex items-center gap-1 group/mic"
+                className="p-1.5 mr-1 text-amber-400 hover:text-amber-300 rounded-lg hover:bg-amber-500/10 transition-colors cursor-pointer flex items-center gap-1 group/mic"
                 title="Voice Search (Speak in English or Hindi)"
                 aria-label="Voice search"
               >
-                <Mic className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover/mic:scale-110 transition-transform" />
+                <Mic className="w-4 h-4 text-amber-400 group-hover/mic:scale-110 transition-transform" />
               </button>
               <button
                 type="submit"
-                className="mr-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm cursor-pointer"
+                className="mr-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black text-xs font-black rounded-xl transition-all shadow-md shadow-amber-500/20 cursor-pointer"
               >
                 Search
               </button>
@@ -307,35 +307,35 @@ export default function Navbar() {
             {/* Theme Toggle (Light / Dark Mode Button) */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+              className="p-2 rounded-xl text-zinc-300 hover:bg-zinc-800 transition-colors flex items-center justify-center cursor-pointer"
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label="Toggle dark and light mode"
             >
               {theme === 'dark' ? (
                 <Sun className="w-5 h-5 text-amber-400 hover:rotate-45 transition-transform" />
               ) : (
-                <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300 hover:-rotate-12 transition-transform" />
+                <Moon className="w-5 h-5 text-zinc-300 hover:-rotate-12 transition-transform" />
               )}
             </button>
 
             {/* Mobile Search Icon Toggle */}
             <button
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-              className="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="md:hidden p-2 rounded-xl text-zinc-300 hover:bg-zinc-800 transition-colors"
               aria-label="Search"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-5 h-5 text-amber-400" />
             </button>
 
             {/* Dynamic Role-Specific Header Action Buttons */}
             {userRole === 'DRIVER' ? (
               <Link
                 href="/driver"
-                className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 text-amber-700 dark:text-amber-300 font-extrabold text-xs border border-amber-500/40 transition-all hover:scale-[1.02] shadow-sm"
+                className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-extrabold text-xs border border-amber-500/40 transition-all hover:scale-[1.02] shadow-sm"
               >
                 <span className="relative flex h-2.5 w-2.5 mr-0.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
                 </span>
                 <span>Pilot Cockpit</span>
               </Link>
@@ -343,14 +343,14 @@ export default function Navbar() {
               <>
                 <Link
                   href="/deliver"
-                  className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs border border-emerald-500/30 transition-all hover:scale-[1.02]"
+                  className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 font-extrabold text-xs border border-amber-500/30 transition-all hover:scale-[1.02]"
                 >
-                  <Truck className="w-4 h-4 text-emerald-600" />
+                  <Truck className="w-4 h-4 text-amber-400" />
                   <span>+ Dispatch Fleet</span>
                 </Link>
                 <Link
                   href="/dashboard?tab=invoices"
-                  className="hidden xl:flex items-center gap-1 px-2.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:border-blue-400 border border-transparent"
+                  className="hidden xl:flex items-center gap-1 px-2.5 py-2 rounded-xl bg-zinc-900 text-zinc-300 font-bold text-xs hover:border-amber-400 border border-amber-500/20"
                 >
                   <span>18% ITC</span>
                 </Link>
@@ -359,14 +359,14 @@ export default function Navbar() {
               <>
                 <Link
                   href="/sell"
-                  className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02]"
+                  className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 text-black font-black text-xs shadow-md shadow-amber-500/25 transition-all hover:scale-[1.02]"
                 >
-                  <PlusCircle className="w-4 h-4" />
+                  <PlusCircle className="w-4 h-4 text-black" />
                   <span>+ Post Product</span>
                 </Link>
                 <Link
                   href="/dashboard?tab=offers"
-                  className="hidden xl:flex items-center gap-1 px-2.5 py-2 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-bold text-xs"
+                  className="hidden xl:flex items-center gap-1 px-2.5 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold text-xs"
                 >
                   <span>Offers (2)</span>
                 </Link>
@@ -376,9 +376,9 @@ export default function Navbar() {
                 {/* Deliver Something CTA (Porter mini truck) */}
                 <Link
                   href="/deliver"
-                  className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs border border-emerald-500/30 transition-all hover:scale-[1.02] shadow-sm"
+                  className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 font-extrabold text-xs border border-amber-500/30 hover:border-amber-400 transition-all hover:scale-[1.02] shadow-sm"
                 >
-                  <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <Truck className="w-4 h-4 text-amber-400" />
                   <span className="hidden sm:inline">Deliver</span>
                   <span className="hidden xl:inline">Something</span>
                 </Link>
@@ -386,9 +386,9 @@ export default function Navbar() {
                 {/* Post Ad / Sell CTA */}
                 <Link
                   href="/sell"
-                  className="hidden md:flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02]"
+                  className="hidden md:flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 text-black font-black text-xs shadow-md shadow-amber-500/30 transition-all hover:scale-[1.02]"
                 >
-                  <PlusCircle className="w-4 h-4" />
+                  <PlusCircle className="w-4 h-4 text-black" />
                   <span>+ Sell</span>
                 </Link>
               </>
@@ -399,10 +399,10 @@ export default function Navbar() {
               href="/api/apk"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors text-[11px] font-bold"
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/30 hover:border-amber-400 transition-colors text-[11px] font-bold"
               title="Download Official Portex Android APK (v1.0.2)"
             >
-              <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
+              <Smartphone className="w-3.5 h-3.5 text-amber-400" />
               <span>APK v1.0.2</span>
             </a>
 

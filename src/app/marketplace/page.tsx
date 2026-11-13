@@ -170,12 +170,12 @@ function MarketplaceContent() {
         </div>
       )}
       {/* Top Banner / Heading */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            PORTEX Marketplace
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            PORT<span className="text-amber-400">EX</span> Marketplace
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5">
             Verified secondhand items with instant Porter on-demand pickup &amp; delivery
           </p>
         </div>
@@ -183,37 +183,37 @@ function MarketplaceContent() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="md:hidden flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300"
+            className="md:hidden flex items-center gap-1.5 px-3.5 py-2 bg-zinc-900 border border-amber-500/30 rounded-xl text-xs font-semibold text-zinc-300"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4 text-amber-400" />
             <span>Filters</span>
           </button>
 
           <Link
             href="/sell"
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-1.5"
+            className="px-4 py-2 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 text-black text-xs font-black rounded-xl shadow-md shadow-amber-500/25 flex items-center gap-1.5"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4 text-black" />
             <span>+ Post Ad</span>
           </Link>
         </div>
       </div>
 
       {/* Clean Portex Search Bar with Voice Input (Permission Protected) */}
-      <div className="p-2 sm:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
+      <div className="p-2 sm:p-3 bg-[#0e0e13] rounded-2xl border border-amber-500/30 shadow-lg flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-amber-400/80" />
           <input
             type="text"
             placeholder="Search verified products, laptops, furniture, vehicles..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500"
+            className="w-full pl-10 pr-10 py-2 bg-zinc-950 rounded-xl text-xs sm:text-sm text-white placeholder-zinc-500 border border-zinc-800 focus:outline-none focus:border-amber-400"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-2.5 text-zinc-400 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -223,10 +223,10 @@ function MarketplaceContent() {
         <button
           type="button"
           onClick={() => openVoiceSearch()}
-          className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+          className="px-3.5 py-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
           title="Search using microphone voice input"
         >
-          <Mic className="w-4 h-4" />
+          <Mic className="w-4 h-4 text-amber-400" />
           <span className="hidden sm:inline">Voice Search</span>
         </button>
       </div>
@@ -237,11 +237,11 @@ function MarketplaceContent() {
         <aside
           className={`space-y-6 ${
             showMobileFilters ? 'block' : 'hidden md:block'
-          } bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 h-fit sticky top-24`}
+          } bg-[#0e0e13] p-5 rounded-2xl border border-zinc-800 h-fit sticky top-24`}
         >
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" /> Filters
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+            <span className="font-bold text-xs uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" /> Filters
             </span>
             <button
               onClick={() => {
@@ -251,7 +251,7 @@ function MarketplaceContent() {
                 setMaxPrice(250000);
                 setVerifiedOnly(false);
               }}
-              className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+              className="text-[11px] text-amber-400 hover:text-amber-300 hover:underline font-semibold"
             >
               Reset All
             </button>
@@ -259,32 +259,32 @@ function MarketplaceContent() {
 
           {/* Search Keywords */}
           <div>
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+            <label className="text-xs font-semibold text-zinc-300 block mb-1.5">
               Keywords
             </label>
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-amber-400/80" />
               <input
                 type="text"
                 placeholder="Search titles..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500"
+                className="w-full pl-8 pr-8 py-2 bg-zinc-950 rounded-xl text-xs text-white border border-zinc-800 focus:outline-none focus:border-amber-400"
               />
               <button
                 type="button"
                 onClick={() => openVoiceSearch()}
-                className="absolute right-2 top-2 p-1 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-slate-700 rounded-lg"
+                className="absolute right-2 top-2 p-1 text-amber-400 hover:bg-amber-500/10 rounded-lg"
                 title="Speak keyword"
               >
-                <Mic className="w-3.5 h-3.5" />
+                <Mic className="w-3.5 h-3.5 text-amber-400" />
               </button>
             </div>
           </div>
 
           {/* Categories */}
           <div>
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
+            <label className="text-xs font-semibold text-zinc-300 block mb-2">
               Category
             </label>
             <div className="space-y-1">
@@ -294,12 +294,12 @@ function MarketplaceContent() {
                   onClick={() => setSelectedCategory(c.slug)}
                   className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
                     selectedCategory === c.slug
-                      ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold'
+                      : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
                   }`}
                 >
                   <span>{c.name}</span>
-                  <span className="text-[10px] text-slate-400">{c.count}</span>
+                  <span className="text-[10px] text-zinc-500">{c.count}</span>
                 </button>
               ))}
             </div>
@@ -307,9 +307,9 @@ function MarketplaceContent() {
 
           {/* Price Range Slider */}
           <div>
-            <div className="flex justify-between items-center text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            <div className="flex justify-between items-center text-xs font-semibold text-zinc-300 mb-1.5">
               <span>Max Price</span>
-              <span className="font-bold text-blue-600 dark:text-blue-400 font-mono">
+              <span className="font-bold text-amber-400 font-mono">
                 ₹{maxPrice.toLocaleString('en-IN')}
               </span>
             </div>
@@ -320,9 +320,9 @@ function MarketplaceContent() {
               step="5000"
               value={maxPrice}
               onChange={e => setMaxPrice(Number(e.target.value))}
-              className="w-full accent-blue-600 cursor-pointer"
+              className="w-full accent-amber-500 cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+            <div className="flex justify-between text-[10px] text-zinc-500 mt-1">
               <span>₹5k</span>
               <span>₹1 Lakh</span>
               <span>₹2.5 Lakh</span>
@@ -331,13 +331,13 @@ function MarketplaceContent() {
 
           {/* Condition */}
           <div>
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+            <label className="text-xs font-semibold text-zinc-300 block mb-1.5">
               Condition
             </label>
             <select
               value={selectedCondition}
               onChange={e => setSelectedCondition(e.target.value)}
-              className="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+              className="w-full p-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400"
             >
               <option value="all">All Conditions</option>
               <option value="BRAND_NEW">Brand New</option>
@@ -348,16 +348,16 @@ function MarketplaceContent() {
           </div>
 
           {/* Verified Toggle */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <div className="pt-2 border-t border-zinc-800">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-zinc-300">
               <input
                 type="checkbox"
                 checked={verifiedOnly}
                 onChange={e => setVerifiedOnly(e.target.checked)}
-                className="w-4 h-4 accent-blue-600 rounded"
+                className="w-4 h-4 accent-amber-500 rounded"
               />
               <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
                 Verified Sellers Only
               </span>
             </label>

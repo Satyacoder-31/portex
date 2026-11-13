@@ -28,8 +28,8 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#020617' },
+    { media: '(prefers-color-scheme: light)', color: '#09090b' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
   ],
 };
 
@@ -68,11 +68,11 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('portex-theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.classList.remove('dark');document.documentElement.setAttribute('data-theme','light');}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('portex-theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.setAttribute('data-theme','light');}else{document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})()`,
           }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200 overflow-x-hidden w-full max-w-full">
+      <body className="min-h-screen flex flex-col bg-[#09090b] text-zinc-100 selection:bg-amber-500 selection:text-black transition-colors duration-200 overflow-x-hidden w-full max-w-full">
         <PortexProvider>
           <Navbar />
           <main className="flex-1 pb-24 md:pb-0 overflow-x-hidden w-full max-w-full">{children}</main>

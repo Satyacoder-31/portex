@@ -168,7 +168,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [isDriverOnline, setIsDriverOnline] = useState<boolean>(true);
   const [incomingJob, setIncomingJob] = useState<IncomingJobRequest | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+  const [theme, setThemeState] = useState<'light' | 'dark'>('dark');
 
   // Registered Users Directory (Persisted in localStorage)
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(INITIAL_REGISTERED_USERS);
@@ -475,10 +475,10 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
           document.documentElement.setAttribute('data-theme', 'light');
         }
       } else {
-        // Default is always light — ignore system dark preference
-        setThemeState('light');
-        document.documentElement.classList.remove('dark');
-        document.documentElement.setAttribute('data-theme', 'light');
+        // Default is luxury Gold & Black theme
+        setThemeState('dark');
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
       }
     } catch {
       // ignore

@@ -132,77 +132,77 @@ export default function HomePage() {
            ======================================================== */}
         {(!userRole || userRole === 'BUYER') && (
           <>
-            <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#003884] via-[#004dc7] to-[#1e50ff] text-white p-3 sm:p-5 shadow-lg shadow-blue-900/15">
-              {/* Subtle Ambient Glows */}
-          <div className="absolute top-0 right-0 w-72 h-72 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-blue-400/20 rounded-full blur-2xl pointer-events-none" />
+            <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#0c0c10] via-[#14141c] to-[#07070a] text-white p-4 sm:p-6 shadow-2xl shadow-black/80 border-2 border-amber-500/30">
+              {/* Subtle Ambient Gold Glows */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-5 items-center">
-            {/* Left Content (Text, Badge, Price tag & CTA) */}
-            <div className="lg:col-span-7 space-y-2 sm:space-y-3">
-              {/* Top Banner Header with Stars */}
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-bold tracking-wide">
-                  <Sparkles className="w-3 h-3 text-[#ffce32]" />
-                  <span>PREMIUM BUYER CLUB</span>
-                </span>
-                <div className="flex items-center text-[#ffce32]">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-current" />
-                  ))}
+              <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-5 items-center">
+                {/* Left Content (Text, Badge, Price tag & CTA) */}
+                <div className="lg:col-span-7 space-y-2 sm:space-y-3">
+                  {/* Top Banner Header with Stars */}
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 backdrop-blur-md text-[11px] font-bold text-amber-300 tracking-wide">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>PREMIUM GOLD BUYER CLUB</span>
+                    </span>
+                    <div className="flex items-center text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Main Headline */}
+                  <div className="space-y-1">
+                    <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-[1.15]">
+                      India's Top Verified <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">Sellers</span> &amp; Instant Delivery
+                    </h1>
+                    <p className="text-xs text-zinc-300 max-w-lg font-normal leading-relaxed">
+                      Browse hand-inspected pre-owned cars, laptops, furniture and bikes with instant Porter mini truck dispatch.
+                    </p>
+                  </div>
+
+                  {/* Price Pill & Badges */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {/* Gold Shield Badge */}
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-md shadow-amber-500/25">
+                      <Award className="w-4 h-4 fill-black" />
+                      <span>ELITE BUYER</span>
+                    </div>
+
+                    {/* Starts @ 99 Pill Badge */}
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#1c1c24] border border-amber-500/30 text-amber-400 font-black text-xs shadow-sm">
+                      <span className="text-[10px] uppercase font-bold text-zinc-400">Starts</span>
+                      <span className="text-sm">@ ₹99</span>
+                    </div>
+
+                    {/* Porter Dispatch Pill */}
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#1c1c24] border border-amber-500/30 text-amber-300 text-xs font-semibold">
+                      <Truck className="w-3.5 h-3.5 text-amber-400" />
+                      <span>18-Min Dispatch</span>
+                    </div>
+                  </div>
+
+                  {/* Primary Action Button (Be Elite Buyer) */}
+                  <div className="pt-1 flex flex-wrap items-center gap-2">
+                    <Link
+                      href="/marketplace?verified=true"
+                      className="px-6 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs sm:text-sm shadow-lg shadow-amber-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                    >
+                      <span>Be Elite Buyer</span>
+                      <ArrowRight className="w-4 h-4 text-black" />
+                    </Link>
+
+                    <Link
+                      href="/deliver"
+                      className="px-4 py-2.5 sm:py-3 rounded-full bg-zinc-900 hover:bg-zinc-800 text-amber-400 font-bold text-xs sm:text-sm border border-amber-500/40 hover:border-amber-400 backdrop-blur-md transition-all flex items-center gap-1.5"
+                    >
+                      <Truck className="w-4 h-4 text-amber-400" />
+                      <span>Book Porter Truck</span>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-
-              {/* Main Headline */}
-              <div className="space-y-1">
-                <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-[1.15]">
-                  India's Top Verified <span className="text-[#23e5db]">Sellers</span> & Instant Delivery
-                </h1>
-                <p className="text-xs text-blue-100 max-w-lg font-normal leading-relaxed">
-                  Browse hand-inspected pre-owned cars, laptops, furniture and bikes with instant Porter mini truck dispatch.
-                </p>
-              </div>
-
-              {/* Price Pill & Badges */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                {/* Gold Shield Badge */}
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs shadow-sm">
-                  <Award className="w-4 h-4 fill-slate-950" />
-                  <span>ELITE BUYER</span>
-                </div>
-
-                {/* Starts @ 99 Pill Badge */}
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#ffce32] text-slate-950 font-black text-xs shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-slate-700">Starts</span>
-                  <span className="text-sm">@ ₹99</span>
-                </div>
-
-                {/* Porter Dispatch Pill */}
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-teal-500/20 border border-teal-300/40 text-teal-200 text-xs font-semibold">
-                  <Truck className="w-3.5 h-3.5 text-teal-300" />
-                  <span>18-Min Dispatch</span>
-                </div>
-              </div>
-
-              {/* Primary Action Button (Be Elite Buyer) */}
-              <div className="pt-1 flex flex-wrap items-center gap-2">
-                <Link
-                  href="/marketplace?verified=true"
-                  className="px-6 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-[#ffce32] to-amber-400 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm shadow-md shadow-yellow-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-                >
-                  <span>Be Elite Buyer</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-
-                <Link
-                  href="/deliver"
-                  className="px-4 py-2.5 sm:py-3 rounded-full bg-white/15 hover:bg-white/20 text-white font-bold text-xs sm:text-sm border border-white/20 backdrop-blur-md transition-all flex items-center gap-1.5"
-                >
-                  <Truck className="w-4 h-4 text-teal-300" />
-                  <span>Book Porter Truck</span>
-                </Link>
-              </div>
-            </div>
 
             {/* Right Content (Man pointing at Smartphone Mockup with Top 5 Verified Listings) */}
             <div className="lg:col-span-5 flex items-center justify-center lg:justify-end gap-3 max-w-full overflow-hidden sm:overflow-visible py-2">

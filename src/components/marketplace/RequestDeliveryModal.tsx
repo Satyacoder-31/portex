@@ -2,20 +2,32 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Truck, MapPin, Package, ShieldCheck, CheckCircle2, ArrowRight, CreditCard, Banknote, QrCode } from 'lucide-react';
+import {
+  X,
+  Truck,
+  ShieldCheck,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  MapPin,
+  CreditCard,
+  Banknote,
+  QrCode,
+  Package,
+} from 'lucide-react';
 import { Listing, DeliveryVehicleType } from '@/types';
-import { usePortex } from '@/lib/store/portexStore';
 import { VEHICLE_OPTIONS } from '@/lib/data/mockData';
+import { usePortex } from '@/lib/store/portexStore';
 
 interface RequestDeliveryModalProps {
   listing: Listing;
-  onClose: () => void;
   offerPrice?: number;
+  onClose: () => void;
 }
 
-export default function RequestDeliveryModal({ listing, onClose, offerPrice }: RequestDeliveryModalProps) {
+export default function RequestDeliveryModal({ listing, offerPrice, onClose }: RequestDeliveryModalProps) {
   const router = useRouter();
-  const { currentUser, createDeliveryBooking } = usePortex();
+  const { createDeliveryBooking, currentUser, showToast } = usePortex();
 
   // Automatic shipping vehicle assignment on the basis of weight (or admin-configured vehicle)
   const autoVehicleType: DeliveryVehicleType =
@@ -100,26 +112,26 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl bg-[#0e0e13] rounded-3xl shadow-2xl border border-amber-500/30 overflow-hidden max-h-[90vh] flex flex-col text-white">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-[#121218]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-base">
+              <h3 className="font-bold text-white text-base">
                 Request Porter Hyperlocal Delivery
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-zinc-400">
                 Direct dispatch from seller’s pickup location to your doorstep
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -128,25 +140,25 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
         {/* Modal Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
           {/* Item Summary Banner */}
-          <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+          <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center gap-3">
             <img
               src={listing.images[0]}
               alt={listing.title}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=400&q=80';
               }}
-              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+              className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-zinc-800"
             />
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-xs text-slate-900 dark:text-white truncate">
+              <h4 className="font-semibold text-xs text-zinc-100 truncate">
                 {listing.title}
               </h4>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-3 mt-1">
-                <span>Weight: <strong className="text-slate-800 dark:text-slate-200">{listing.weightKg} kg</strong></span>
-                <span>Dim: <strong className="text-slate-800 dark:text-slate-200">{listing.dimensions}</strong></span>
-                <span>Price: <strong className="text-blue-600 dark:text-blue-400">₹{listing.price.toLocaleString('en-IN')}</strong></span>
+              <div className="text-[11px] text-zinc-400 flex items-center gap-3 mt-1">
+                <span>Weight: <strong className="text-zinc-200">{listing.weightKg} kg</strong></span>
+                <span>Dim: <strong className="text-zinc-200">{listing.dimensions}</strong></span>
+                <span>Price: <strong className="text-amber-400 font-bold">₹{listing.price.toLocaleString('en-IN')}</strong></span>
                 {offerPrice && (
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
                     Deal: ₹{offerPrice.toLocaleString('en-IN')}
                   </span>
                 )}
@@ -156,35 +168,35 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
 
           {/* Pickup and Drop Route Points */}
           <div className="space-y-3">
-            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="p-3.5 rounded-2xl border border-zinc-800 bg-zinc-950/60 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
                 <span>PICKUP LOCATION (Seller: {listing.sellerName})</span>
               </div>
-              <p className="text-xs text-slate-700 dark:text-slate-300 pl-4 font-medium">
+              <p className="text-xs text-zinc-300 pl-4 font-medium">
                 {listing.location.address}, {listing.location.city} ({listing.location.pincode})
               </p>
-              <div className="text-[11px] text-slate-500 pl-4">Contact: {listing.sellerPhone}</div>
+              <div className="text-[11px] text-zinc-400 pl-4">Contact: {listing.sellerPhone}</div>
             </div>
 
-            <div className="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/30 dark:bg-blue-950/20 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <div className="p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
                 <span>DROP DESTINATION (Your Delivery Address)</span>
               </div>
               <input
                 type="text"
                 value={dropAddress}
                 onChange={e => setDropAddress(e.target.value)}
-                className="w-full text-xs font-medium bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
+                className="w-full text-xs font-medium bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-zinc-100 focus:outline-none focus:border-amber-400"
               />
-              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <div className="flex items-center gap-2 text-[11px] text-zinc-400">
                 <span>Receiver Phone:</span>
                 <input
                   type="text"
                   value={contactPhone}
                   onChange={e => setContactPhone(e.target.value)}
-                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200"
+                  className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-zinc-200"
                 />
               </div>
             </div>
@@ -192,11 +204,11 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
 
           {/* Automatic Shipping Vehicle Assignment */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
                 Shipping Fleet Assignment
               </label>
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="text-[11px] font-bold text-amber-400">
                 Automatic based on weight ({listing.weightKg} kg)
               </span>
             </div>
@@ -206,20 +218,20 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
                   key={v.type}
                   type="button"
                   onClick={() => setSelectedVehicleType(v.type)}
-                  className={`p-3 rounded-xl border text-left transition-all relative ${
+                  className={`p-3 rounded-2xl border text-left transition-all relative ${
                     selectedVehicleType === v.type
-                      ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 shadow-md ring-1 ring-emerald-500'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                      ? 'border-amber-400 bg-amber-500/15 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400'
+                      : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700'
                   }`}
                 >
                   {v.type === autoVehicleType && (
-                    <span className="absolute -top-2 right-2 text-[9px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">
+                    <span className="absolute -top-2 right-2 text-[9px] font-black bg-amber-400 text-black px-2 py-0.5 rounded-full shadow-sm">
                       Auto-Assigned
                     </span>
                   )}
-                  <div className="font-bold text-xs text-slate-900 dark:text-white">{v.name}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">Payload: &le; {v.maxWeightKg} kg</div>
-                  <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1.5">
+                  <div className="font-bold text-xs text-white">{v.name}</div>
+                  <div className="text-[11px] text-zinc-400 mt-0.5">Payload: &le; {v.maxWeightKg} kg</div>
+                  <div className="text-xs font-black text-amber-400 mt-1.5">
                     ₹{(v.baseFare + distanceKm * v.perKmRate).toFixed(0)} est.
                   </div>
                 </button>
@@ -229,7 +241,7 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
 
           {/* Choose Payment Method */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 block">
               Choose Payment Method
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -244,41 +256,41 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
                   key={pm.id}
                   type="button"
                   onClick={() => setPaymentMethod(pm.id as any)}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                  className={`p-2.5 rounded-2xl border text-left transition-all ${
                     paymentMethod === pm.id
-                      ? 'border-blue-500 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold ring-1 ring-blue-500'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                      ? 'border-amber-400 bg-amber-500/15 text-amber-300 font-bold ring-1 ring-amber-400'
+                      : 'border-zinc-800 bg-zinc-950/60 text-zinc-300 hover:bg-zinc-900'
                   }`}
                 >
                   <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <pm.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <pm.icon className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" />
                     <span>{pm.name}</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5 truncate">{pm.sub}</div>
+                  <div className="text-[10px] text-zinc-400 mt-0.5 truncate">{pm.sub}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Fare Summary Breakdown */}
-          <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2 border border-slate-800">
-            <div className="flex justify-between text-xs text-slate-400">
+          <div className="p-4 rounded-2xl bg-zinc-950 text-white space-y-2 border border-amber-500/25">
+            <div className="flex justify-between text-xs text-zinc-400">
               <span>Estimated Distance</span>
               <span>{distanceKm} km (~24 mins)</span>
             </div>
-            <div className="flex justify-between text-xs text-slate-400">
+            <div className="flex justify-between text-xs text-zinc-400">
               <span>Base Fare & Handling</span>
               <span>₹{baseFare}</span>
             </div>
-            <div className="flex justify-between text-xs text-slate-400">
+            <div className="flex justify-between text-xs text-zinc-400">
               <span>Distance Freight ({distanceKm} km &times; ₹{selectedVehicle.perKmRate}/km)</span>
               <span>₹{distanceFare}</span>
             </div>
-            <div className="flex justify-between text-xs text-slate-400">
+            <div className="flex justify-between text-xs text-zinc-400">
               <span>GST (18% under SAC 9965)</span>
               <span>₹{gstAmount}</span>
             </div>
-            <div className="pt-2 border-t border-slate-800 flex justify-between font-bold text-sm text-emerald-400">
+            <div className="pt-2 border-t border-zinc-800 flex justify-between font-black text-sm text-amber-400">
               <span>Total Logistics Fare</span>
               <span>₹{totalAmount}</span>
             </div>
@@ -286,10 +298,10 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
         </div>
 
         {/* Footer CTAs */}
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
-          <div className="text-xs text-slate-500">
+        <div className="px-6 py-4 border-t border-zinc-800 bg-[#121218] flex items-center justify-between">
+          <div className="text-xs text-zinc-400">
             Payment Mode:{' '}
-            <strong className="text-slate-800 dark:text-slate-200">
+            <strong className="text-amber-400">
               {paymentMethod === 'ONLINE_UPI'
                 ? 'Online UPI / QR'
                 : paymentMethod === 'CASH_ON_DELIVERY'
@@ -304,17 +316,17 @@ export default function RequestDeliveryModal({ listing, onClose, offerPrice }: R
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl"
+              className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white rounded-xl"
             >
               Cancel
             </button>
             <button
               onClick={handleConfirm}
               disabled={isSubmitting}
-              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all hover:scale-[1.02]"
+              className="px-5 py-2.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black text-xs font-black rounded-xl shadow-lg shadow-amber-500/30 flex items-center gap-2 transition-all hover:scale-[1.02]"
             >
               <span>{isSubmitting ? 'Confirming Dispatch...' : 'Confirm & Dispatch Driver'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-black" />
             </button>
           </div>
         </div>
