@@ -86,7 +86,7 @@ function ChatContent() {
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle URL query parameters to route to corresponding conversation
   useEffect(() => {
@@ -139,9 +139,11 @@ function ChatContent() {
     }
   }, [convParam, listingParam, deliveryParam, listings, deliveries]);
 
-  // Scroll to latest message
+  // Scroll ONLY the internal messages container to bottom without moving the page window downward
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages, activeConvId]);
 
   const activeConv = conversations.find(c => c.id === activeConvId) || conversations[0] || {
@@ -165,10 +167,21 @@ function ChatContent() {
 
     sendMessage(activeConv.id, inputText.trim());
     setInputText('');
+
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }, 30);
   };
 
   const handleQuickSend = (text: string) => {
     sendMessage(activeConv.id, text);
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }, 30);
   };
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -548,7 +561,7 @@ function ChatContent() {
           )}
 
           {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
             {activeMessages.map(msg => {
               const isMine = msg.senderId === currentUser.id;
 
@@ -638,7 +651,6 @@ function ChatContent() {
                 </div>
               );
             })}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Negotiation Suggestions */}

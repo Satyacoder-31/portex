@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   TrendingUp,
@@ -26,6 +26,10 @@ import {
   Clock,
   Trash2,
   ChevronRight,
+  Bot,
+  MessageSquare,
+  Send,
+  Sparkles,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { DeliveryVehicleType } from '@/types';
@@ -42,11 +46,48 @@ export default function AdminPage() {
     updateDeliveryStatus,
     acceptDeliveryJob,
     showToast,
+    conversations,
+    messages,
+    adminAutoMessageEnabled,
+    adminAutoMessageText,
+    updateAdminAutoMessageSettings,
+    adminSendReply,
   } = usePortex();
 
   const [activeTab, setActiveTab] = useState<
-    'products' | 'deliveries' | 'analytics' | 'business' | 'drivers' | 'disputes' | 'logs'
+    'products' | 'deliveries' | 'automessage' | 'analytics' | 'business' | 'drivers' | 'disputes' | 'logs'
   >('products');
+
+  // Auto-Message and Manual Reply State
+  const [autoMessageEnabled, setAutoMessageEnabled] = useState(adminAutoMessageEnabled);
+  const [autoMessageText, setAutoMessageText] = useState(adminAutoMessageText);
+  const [selectedChatId, setSelectedChatId] = useState<string>(conversations[0]?.id || '');
+  const [manualReplyText, setManualReplyText] = useState('');
+
+  useEffect(() => {
+    setAutoMessageEnabled(adminAutoMessageEnabled);
+    setAutoMessageText(adminAutoMessageText);
+  }, [adminAutoMessageEnabled, adminAutoMessageText]);
+
+  useEffect(() => {
+    if (!selectedChatId && conversations.length > 0) {
+      setSelectedChatId(conversations[0].id);
+    }
+  }, [conversations, selectedChatId]);
+
+  const handleSaveAutoMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateAdminAutoMessageSettings(autoMessageEnabled, autoMessageText);
+  };
+
+  const handleSendManualReply = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualReplyText.trim() || !selectedChatId) return;
+    adminSendReply(selectedChatId, manualReplyText.trim());
+    setManualReplyText('');
+  };
+
+  const activeChatMessages = messages[selectedChatId] || [];
 
   // Product verification filter
   const [productFilter, setProductFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
@@ -159,6 +200,7 @@ export default function AdminPage() {
             label: `Product Verifications ${pendingListingsCount > 0 ? `(${pendingListingsCount} Pending)` : `(${listings.length})`}`,
           },
           { id: 'deliveries', label: `Logistics & Dispatch (${deliveries.length})` },
+          { id: 'automessage', label: `Auto-Message & Support Desk (${adminAutoMessageEnabled ? 'Active' : 'Manual'})` },
           { id: 'analytics', label: 'Executive Analytics & GMV' },
           { id: 'business', label: 'Business Profile & GST' },
           { id: 'drivers', label: `Driver KYC Queue (${kycQueue.length})` },
@@ -527,6 +569,246 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: AUTO-MESSAGE SETTINGS & MANUAL SUPPORT DESK */}
+      {activeTab === 'automessage' && (
+        <div className="space-y-6">
+          {/* Header Banner */}
+          <div className="p-6 bg-gradient-to-r from-zinc-900 via-zinc-900/90 to-amber-950/40 rounded-3xl border border-amber-500/30 shadow-lg space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  <Bot className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                    <span>Chat Auto-Response &amp; Platform Support Desk</span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
+                        autoMessageEnabled
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                      }`}
+                    >
+                      {autoMessageEnabled ? '● AUTO-REPLY ON' : '○ MANUAL REPLIES ONLY'}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-zinc-400">
+                    Choose whether Portex automatically sends instant intelligent replies to customer messages, or reply manually yourself as Administrator.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left 5 Cols: Auto-Message Configuration */}
+            <div className="lg:col-span-5 p-6 bg-zinc-900 rounded-3xl border border-zinc-800 shadow-sm space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+                <h3 className="text-sm font-black text-white flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-amber-500" />
+                  Auto-Message Configuration
+                </h3>
+                <span className="text-[10px] text-zinc-400 font-medium">Admin Policy</span>
+              </div>
+
+              {/* Master Toggle */}
+              <div className="p-4 rounded-2xl bg-zinc-800/60 border border-zinc-700/60 flex items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-white">
+                    Automated Instant Replies
+                  </h4>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    {autoMessageEnabled
+                      ? 'System automatically responds to inquiries after 2 seconds.'
+                      : 'Disabled: No automated bot replies. Admins & sellers reply manually.'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setAutoMessageEnabled(!autoMessageEnabled)}
+                  className={`py-1.5 px-3 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    autoMessageEnabled
+                      ? 'bg-amber-500 text-zinc-950 font-black border-amber-400 shadow-md'
+                      : 'bg-zinc-800 text-zinc-400 font-bold border-zinc-700'
+                  }`}
+                >
+                  <span className="text-xs">{autoMessageEnabled ? 'ON' : 'OFF'}</span>
+                </button>
+              </div>
+
+              {/* Template Editor */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-zinc-300">
+                  Custom Auto-Message Response Template
+                </label>
+                <textarea
+                  rows={4}
+                  value={autoMessageText}
+                  onChange={e => setAutoMessageText(e.target.value)}
+                  placeholder="Enter auto-message text to reply to inquiries..."
+                  disabled={!autoMessageEnabled}
+                  className={`w-full p-3 rounded-2xl border text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                    autoMessageEnabled
+                      ? 'bg-zinc-800/80 border-zinc-700 text-white'
+                      : 'bg-zinc-800/30 border-zinc-800 text-zinc-500 cursor-not-allowed'
+                  }`}
+                />
+              </div>
+
+              {/* Quick Template Presets */}
+              {autoMessageEnabled && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                    Quick Preset Templates
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    {[
+                      {
+                        title: 'General Support Desk',
+                        text: 'Greetings from Portex Support Desk! We have received your message. Our operations team is coordinating your request and will assist you shortly.',
+                      },
+                      {
+                        title: 'Logistics Fleet Dispatch',
+                        text: 'Thank you for contacting Portex Fleet Desk! Our dispatch unit is assigning the nearest 2-wheeler or Tata Ace driver to your location.',
+                      },
+                      {
+                        title: 'Off-Hours Inquiry',
+                        text: 'Thank you for reaching out! Our verification desk operates 24/7. Your inquiry has been queued for immediate review.',
+                      },
+                    ].map(p => (
+                      <button
+                        key={p.title}
+                        type="button"
+                        onClick={() => setAutoMessageText(p.text)}
+                        className="text-left p-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/60 transition-colors text-[11px] text-zinc-300"
+                      >
+                        <span className="font-bold text-amber-400 block">{p.title}</span>
+                        <span className="text-[10px] text-zinc-400 line-clamp-1">{p.text}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Save Settings Button */}
+              <button
+                type="button"
+                onClick={() => updateAdminAutoMessageSettings(autoMessageEnabled, autoMessageText)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Auto-Message Configuration</span>
+              </button>
+            </div>
+
+            {/* Right 7 Cols: Direct Manual Chat Desk */}
+            <div className="lg:col-span-7 bg-zinc-900 rounded-3xl border border-zinc-800 shadow-sm flex flex-col h-[560px] overflow-hidden">
+              <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-black text-white flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-purple-400" />
+                    Admin Manual Chat Desk
+                  </h3>
+                  <p className="text-[11px] text-zinc-400">
+                    Reply manually to customer inquiries directly from this console
+                  </p>
+                </div>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold">
+                  {conversations.length} Active Threads
+                </span>
+              </div>
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-12 min-h-0">
+                {/* Conversation Selector (4 cols) */}
+                <div className="md:col-span-4 border-r border-zinc-800 overflow-y-auto divide-y divide-zinc-800/80">
+                  {conversations.map(c => {
+                    const isSelected = c.id === selectedChatId;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedChatId(c.id)}
+                        className={`w-full p-3 text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
+                          isSelected
+                            ? 'bg-amber-500/10 border-l-4 border-amber-500'
+                            : 'hover:bg-zinc-800/50'
+                        }`}
+                      >
+                        <img
+                          src={c.contactAvatar}
+                          alt={c.contactName}
+                          className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-zinc-700"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold text-white truncate">
+                            {c.contactName}
+                          </div>
+                          <div className="text-[10px] text-zinc-400 truncate mt-0.5">
+                            {c.lastMessage || 'No messages yet'}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Message View & Manual Reply (8 cols) */}
+                <div className="md:col-span-8 flex flex-col h-full bg-zinc-950/40 min-h-0">
+                  {/* Messages Stream */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+                    {activeChatMessages.map(m => {
+                      const isAdminMsg = m.senderName.includes('Admin') || m.senderName.includes('Platform');
+                      return (
+                        <div
+                          key={m.id}
+                          className={`flex flex-col ${isAdminMsg ? 'items-end' : 'items-start'} space-y-0.5`}
+                        >
+                          <span className="text-[9px] text-zinc-400 px-1 font-medium">
+                            {m.senderName} &bull; {m.timestamp}
+                          </span>
+                          <div
+                            className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
+                              isAdminMsg
+                                ? 'bg-amber-500 text-zinc-950 font-bold rounded-tr-none'
+                                : 'bg-zinc-800 text-white border border-zinc-700 rounded-tl-none'
+                            }`}
+                          >
+                            {m.content}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Manual Reply Form */}
+                  <form
+                    onSubmit={handleSendManualReply}
+                    className="p-3 border-t border-zinc-800 bg-zinc-900 flex items-center gap-2"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Type manual reply as Admin..."
+                      value={manualReplyText}
+                      onChange={e => setManualReplyText(e.target.value)}
+                      className="flex-1 py-2 px-3 bg-zinc-800 border border-zinc-700 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!manualReplyText.trim()}
+                      className="py-2 px-3 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs rounded-xl flex items-center gap-1.5 transition-transform hover:scale-105 disabled:opacity-40 cursor-pointer"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Reply</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

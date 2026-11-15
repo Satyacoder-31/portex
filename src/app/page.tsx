@@ -405,11 +405,13 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Grid of Listings: exactly 2 per line on mobile, 4 on desktop */}
+          {/* Grid of Listings: only Admin-APPROVED products go live to buyers */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
+            {listings
+              .filter(listing => (listing.verificationStatus || 'APPROVED') === 'APPROVED' && listing.status === 'ACTIVE')
+              .map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
           </div>
         </section>
 

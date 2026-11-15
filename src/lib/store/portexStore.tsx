@@ -161,6 +161,12 @@ interface PortexStoreContextType {
   renewListing: (listingId: string) => void;
   deleteConversations: (conversationIds: string[]) => void;
 
+  // Admin Auto-Message Settings & Manual Reply Desk
+  adminAutoMessageEnabled: boolean;
+  adminAutoMessageText: string;
+  updateAdminAutoMessageSettings: (enabled: boolean, text: string) => void;
+  adminSendReply: (conversationId: string, replyText: string) => void;
+
   // Notification Toast Helper
   toastMessage: string | null;
   showToast: (msg: string) => void;
@@ -220,6 +226,12 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   const [recentSearches, setRecentSearches] = useState<string[]>(INITIAL_RECENT_SEARCHES);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
 
+  // Admin Auto-Message Settings State
+  const [adminAutoMessageEnabled, setAdminAutoMessageEnabled] = useState<boolean>(true);
+  const [adminAutoMessageText, setAdminAutoMessageText] = useState<string>(
+    'Greetings from Portex Support Desk! We have received your message. Our operations team is coordinating your request and will assist you shortly.'
+  );
+
   // Restore saved user & registered accounts from localStorage
   useEffect(() => {
     try {
@@ -277,6 +289,16 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       const savedDriverVeh = localStorage.getItem('portex_driver_vehicle') as DeliveryVehicleType | null;
       if (savedDriverVeh) {
         setDriverVehicleTypeState(savedDriverVeh);
+      }
+
+      const savedAutoMsg = localStorage.getItem('portex_admin_auto_message_enabled');
+      if (savedAutoMsg !== null) {
+        setAdminAutoMessageEnabled(savedAutoMsg === 'true');
+      }
+
+      const savedAutoText = localStorage.getItem('portex_admin_auto_message_text');
+      if (savedAutoText) {
+        setAdminAutoMessageText(savedAutoText);
       }
     } catch {
       // ignore
@@ -1247,58 +1269,106 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
 
-    // Simulated automated intelligent reply after 2.0s
-    setTimeout(() => {
-      const conv = conversations.find(c => c.id === conversationId);
-      const isDriver =
-        conv?.deliveryId ||
-        conv?.contactRole?.toLowerCase().includes('driver') ||
-        conv?.contactRole?.toLowerCase().includes('partner');
+    // Simulated automated intelligent reply (Only if Admin Auto-Message is enabled)
+    if (adminAutoMessageEnabled) {
+      setTimeout(() => {
+        const conv = conversations.find(c => c.id === conversationId);
+        const isDriver =
+          conv?.deliveryId ||
+          conv?.contactRole?.toLowerCase().includes('driver') ||
+          conv?.contactRole?.toLowerCase().includes('partner');
 
-      let replyContent = 'Thank you for your message! I am available to dispatch via Portex anytime.';
-      if (offerAmount) {
-        replyContent = `Thanks for your offer of ₹${offerAmount.toLocaleString('en-IN')}! Let me confirm the pickup readiness.`;
-      } else if (imageUrl) {
-        replyContent = 'Photo received! Looks in great condition, ready for packing and instant courier dispatch.';
-      } else if (isDriver) {
-        replyContent = 'Acknowledged! Following live GPS route now. Will reach the waypoint shortly.';
-      }
+        let replyContent = adminAutoMessageText || 'Thank you for your message! I am available to dispatch via Portex anytime.';
+        if (offerAmount) {
+          replyContent = `Thanks for your offer of ₹${offerAmount.toLocaleString('en-IN')}! ${adminAutoMessageText || 'Let me review the readiness and confirm.'}`;
+        } else if (imageUrl) {
+          replyContent = `Photo received! ${adminAutoMessageText || 'Ready for packing and instant courier dispatch.'}`;
+        } else if (isDriver) {
+          replyContent = 'Acknowledged! Following live GPS route now. Will reach the waypoint shortly.';
+        }
 
-      const replyMsg: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        senderId: conv?.contactId || 'usr_other',
-        senderName: conv?.contactName || 'Seller Support',
-        recipientId: currentUser.id,
-        content: replyContent,
-        timestamp: 'Just now',
-        isRead: false,
-      };
-
-      setMessages(p => {
-        const next = {
-          ...p,
-          [conversationId]: [...(p[conversationId] || []), replyMsg],
+        const replyMsg: ChatMessage = {
+          id: `msg-${Date.now() + 1}`,
+          senderId: conv?.contactId || 'usr_other',
+          senderName: conv?.contactName || 'Support Desk',
+          recipientId: currentUser.id,
+          content: replyContent,
+          timestamp: 'Just now',
+          isRead: false,
         };
-        try {
-          localStorage.setItem('portex_messages', JSON.stringify(next));
-        } catch {
-          // ignore
-        }
-        return next;
-      });
 
-      setConversations(p => {
-        const next = p.map(c =>
-          c.id === conversationId ? { ...c, lastMessage: replyContent, lastTimestamp: 'Just now' } : c
-        );
-        try {
-          localStorage.setItem('portex_conversations', JSON.stringify(next));
-        } catch {
-          // ignore
-        }
-        return next;
-      });
-    }, 2000);
+        setMessages(p => {
+          const next = {
+            ...p,
+            [conversationId]: [...(p[conversationId] || []), replyMsg],
+          };
+          try {
+            localStorage.setItem('portex_messages', JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+          return next;
+        });
+
+        setConversations(p => {
+          const next = p.map(c =>
+            c.id === conversationId ? { ...c, lastMessage: replyContent, lastTimestamp: 'Just now' } : c
+          );
+          try {
+            localStorage.setItem('portex_conversations', JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+          return next;
+        });
+      }, 2000);
+    }
+  };
+
+  const updateAdminAutoMessageSettings = (enabled: boolean, text: string) => {
+    setAdminAutoMessageEnabled(enabled);
+    setAdminAutoMessageText(text);
+    try {
+      localStorage.setItem('portex_admin_auto_message_enabled', String(enabled));
+      localStorage.setItem('portex_admin_auto_message_text', text);
+    } catch {}
+    showToast(enabled ? 'Auto-message enabled with updated template!' : 'Auto-message disabled. Manual replies only.');
+  };
+
+  const adminSendReply = (conversationId: string, replyText: string) => {
+    if (!replyText.trim()) return;
+    const adminMsg: ChatMessage = {
+      id: `msg-admin-${Date.now()}`,
+      senderId: currentUser.id,
+      senderName: currentUser.role === 'ADMIN' ? 'Platform Administrator (Portex Support)' : currentUser.name,
+      recipientId: 'usr_customer',
+      content: replyText.trim(),
+      timestamp: 'Just now',
+      isRead: true,
+    };
+
+    setMessages(prev => {
+      const updated = {
+        ...prev,
+        [conversationId]: [...(prev[conversationId] || []), adminMsg],
+      };
+      try {
+        localStorage.setItem('portex_messages', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    setConversations(prev => {
+      const updated = prev.map(c =>
+        c.id === conversationId ? { ...c, lastMessage: replyText.trim(), lastTimestamp: 'Just now' } : c
+      );
+      try {
+        localStorage.setItem('portex_conversations', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    showToast('Manual reply delivered successfully!');
   };
 
   const respondToOffer = (conversationId: string, messageId: string, status: 'ACCEPTED' | 'DECLINED') => {
@@ -1557,6 +1627,10 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         closeVoiceSearch,
         renewListing,
         deleteConversations,
+        adminAutoMessageEnabled,
+        adminAutoMessageText,
+        updateAdminAutoMessageSettings,
+        adminSendReply,
       }}
     >
       {children}

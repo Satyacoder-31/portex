@@ -20,6 +20,7 @@ import {
   Package,
   AlertTriangle,
   RotateCcw,
+  Clock,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import MakeOfferModal from '@/components/marketplace/MakeOfferModal';
@@ -30,8 +31,11 @@ export default function ListingDetailPage() {
   const router = useRouter();
   const listingId = params?.id as string;
 
-  const { listings, toggleFavorite, isFavorite, showToast, renewListing } = usePortex();
+  const { listings, toggleFavorite, isFavorite, showToast, renewListing, userRole, currentUser, verifyListing } = usePortex();
   const listing = listings.find(l => l.id === listingId) || listings[0];
+  const isApproved = (listing.verificationStatus || 'APPROVED') === 'APPROVED';
+  const isPending = listing.verificationStatus === 'PENDING';
+  const isRejected = listing.verificationStatus === 'REJECTED';
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -79,6 +83,84 @@ export default function ListingDetailPage() {
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
       </div>
+
+      {/* Admin Action Review Bar (when logged in as Admin and listing is pending) */}
+      {userRole === 'ADMIN' && isPending && (
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-950/80 via-zinc-900 to-purple-950/80 border-2 border-purple-500/40 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-purple-500/10 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-purple-600 text-white rounded-2xl flex-shrink-0 shadow-lg">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-purple-500 text-white text-[10px] font-black uppercase tracking-wider">
+                  Admin Verification Desk
+                </span>
+                <span className="text-xs text-purple-300 font-bold">
+                  Status: PENDING REVIEW
+                </span>
+              </div>
+              <h3 className="text-sm font-black text-white mt-0.5">
+                This item is awaiting your Admin approval to go live to buyers
+              </h3>
+              <p className="text-xs text-purple-200/80">
+                Verify product authenticity, photos, weight ({listing.weightKg} kg), and approve to make it live in the marketplace.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0 self-stretch sm:self-auto">
+            <button
+              onClick={() => {
+                verifyListing(listing.id, 'APPROVED');
+                showToast(`Listing "${listing.title}" approved & published live!`);
+              }}
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Approve &amp; Publish Live</span>
+            </button>
+            <button
+              onClick={() => {
+                verifyListing(listing.id, 'REJECTED');
+                showToast(`Listing "${listing.title}" rejected.`);
+              }}
+              className="px-3 py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white font-black text-xs rounded-xl transition-colors cursor-pointer"
+            >
+              Reject
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Buyer Pending Approval Warning (Non-Admin View) */}
+      {!isApproved && userRole !== 'ADMIN' && (
+        <div className="p-4 sm:p-5 bg-amber-500/10 border-2 border-amber-500/40 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-500/5 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500 text-zinc-950 rounded-2xl flex-shrink-0 font-black">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-black uppercase tracking-wider">
+                  Pending Admin Verification
+                </span>
+                <span className="text-xs text-amber-400 font-bold">
+                  Not Live to Buyers
+                </span>
+              </div>
+              <h3 className="text-sm font-black text-white mt-0.5">
+                {currentUser.id === listing.sellerId
+                  ? 'Your listing has been submitted and is currently in the Admin verification queue'
+                  : 'This listing is pending Admin review and is not yet open for buyer purchase'}
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Portex Admin will review and approve this advertisement shortly. Once accepted, courier booking and price offers will be activated.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* OLX-Style Inactive / Expired Notice Banner */}
       {listing.status === 'EXPIRED' && (
@@ -247,31 +329,45 @@ export default function ListingDetailPage() {
 
             {/* Dual CTAs: Request Porter Delivery & Make Offer */}
             <div className="space-y-2.5 pt-2">
-              <button
-                onClick={() => setShowDeliveryModal(true)}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
-              >
-                <Truck className="w-4 h-4" />
-                <span>Request Porter Delivery (Direct from Seller)</span>
-              </button>
+              {isApproved ? (
+                <>
+                  <button
+                    onClick={() => setShowDeliveryModal(true)}
+                    className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+                  >
+                    <Truck className="w-4 h-4" />
+                    <span>Request Porter Delivery (Direct from Seller)</span>
+                  </button>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  onClick={() => setShowOfferModal(true)}
-                  className="py-3 px-3 rounded-2xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <Tag className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Make an Offer</span>
-                </button>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      onClick={() => setShowOfferModal(true)}
+                      className="py-3 px-3 rounded-2xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Tag className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Make an Offer</span>
+                    </button>
 
-                <Link
-                  href={`/chat?listingId=${listing.id}`}
-                  className="py-3 px-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-blue-500/20"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Chat Seller</span>
-                </Link>
-              </div>
+                    <Link
+                      href={`/chat?listingId=${listing.id}`}
+                      className="py-3 px-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-blue-500/20"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Chat Seller</span>
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 rounded-2xl bg-zinc-900 border border-amber-500/30 text-center space-y-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 font-bold text-xs border border-amber-500/20">
+                    <Clock className="w-3.5 h-3.5" />
+                    Purchases Locked &bull; Awaiting Admin Approval
+                  </span>
+                  <p className="text-[11px] text-zinc-400">
+                    This item is not yet live. Buyers will be able to make offers and book Porter courier once verified by Admin.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

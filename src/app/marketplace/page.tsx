@@ -100,17 +100,10 @@ function MarketplaceContent() {
           return false;
         }
 
-        // Admin verification filter:
-        // Only show APPROVED products to general buyers.
-        // Admins and the seller who created the item can view pending items.
-        if (
-          item.verificationStatus === 'PENDING' &&
-          userRole !== 'ADMIN' &&
-          currentUser.id !== item.sellerId
-        ) {
-          return false;
-        }
-        if (item.verificationStatus === 'REJECTED' && userRole !== 'ADMIN') {
+        // Strict Admin Verification Gate:
+        // Unless and until the Admin accepts/approves the item, it must NOT go live or be visible to buyers.
+        const isApproved = (item.verificationStatus || 'APPROVED') === 'APPROVED';
+        if (!isApproved && userRole !== 'ADMIN') {
           return false;
         }
 

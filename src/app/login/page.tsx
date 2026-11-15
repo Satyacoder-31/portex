@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   AlertCircle,
   X,
+  Copy,
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import { User, UserIntent, DeliveryVehicleType, UserRole } from '@/types';
@@ -81,6 +82,22 @@ function LoginForm() {
     setErrorMessage(null);
   }, [searchParams]);
 
+  const getRoleDestination = (role?: UserRole) => {
+    switch (role) {
+      case 'ADMIN':
+        return '/admin';
+      case 'DRIVER':
+        return '/driver';
+      case 'SELLER':
+        return '/dashboard?tab=listings';
+      case 'ENTERPRISE':
+        return '/parcel';
+      case 'BUYER':
+      default:
+        return '/marketplace';
+    }
+  };
+
   // Quick 1-Click Demo Login
   const handleQuickDemoLogin = (targetUser: User) => {
     setLoading(true);
@@ -89,14 +106,17 @@ function LoginForm() {
       setLoading(false);
       loginUser(targetUser);
       confetti({ particleCount: 65, spread: 70, origin: { y: 0.6 } });
-      const destination =
-        targetUser.role === 'DRIVER'
-          ? '/driver'
-          : targetUser.role === 'SELLER'
-          ? '/dashboard?tab=listings'
-          : '/dashboard';
+      const destination = getRoleDestination(targetUser.role);
       router.push(destination);
-    }, 400);
+    }, 350);
+  };
+
+  // Auto-fill credentials in form for manual testing
+  const handleAutoFill = (email: string, pass: string) => {
+    setLoginIdentifier(email);
+    setLoginPassword(pass);
+    setLoginMethod('password');
+    showToast(`Loaded ${email} credentials!`);
   };
 
   // Google 1-Click Login
@@ -188,12 +208,7 @@ function LoginForm() {
 
       loginUser(matched);
       confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
-      const targetPath =
-        matched.role === 'DRIVER'
-          ? '/driver'
-          : matched.role === 'SELLER'
-          ? '/dashboard?tab=listings'
-          : '/dashboard';
+      const targetPath = getRoleDestination(matched.role);
       router.push(targetPath);
     }, 500);
   };
@@ -352,19 +367,19 @@ function LoginForm() {
   const passwordStrength = getPasswordStrength(regPassword);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
+    <div className="min-h-screen bg-zinc-950 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center text-zinc-100">
       {/* Top Back Link */}
-      <div className="w-full max-w-5xl mb-6">
+      <div className="w-full max-w-6xl mb-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-amber-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Marketplace & Logistics</span>
+          <span>Back to Marketplace &amp; Logistics</span>
         </Link>
       </div>
 
-      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* Left Side: Brand Value & Trust Card */}
         <div className="lg:col-span-5 bg-gradient-to-br from-blue-700 via-indigo-800 to-blue-950 rounded-3xl p-6 sm:p-8 text-white flex flex-col justify-between shadow-xl relative overflow-hidden">
@@ -496,36 +511,162 @@ function LoginForm() {
                 </div>
               )}
 
-              {/* Quick 1-Click Demo Accounts */}
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Quick Test Logins (1-Click)
-                  </span>
-                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">Instant switch</span>
+              {/* Dedicated Role Credentials & One-Tap Direct Login Grid */}
+              <div className="p-4 sm:p-5 bg-gradient-to-br from-zinc-900/90 to-black rounded-3xl border-2 border-amber-500/30 shadow-xl shadow-amber-500/5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-zinc-800">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      <Sparkles className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-2">
+                        <span>Role Credentials &amp; One-Tap Instant Login</span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500 text-zinc-950 font-black text-[9px] uppercase tracking-wider">
+                          Ready
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-zinc-400">
+                        Click <strong>One-Tap Login</strong> to sign in instantly, or <strong>Auto-Fill</strong> to test the credential form below.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                  {registeredUsers.slice(0, 4).map(u => (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => handleQuickDemoLogin(u)}
-                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 bg-white dark:bg-slate-900 text-left transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer"
-                      title={`Sign in as ${u.name} (${u.role})`}
-                    >
-                      <img
-                        src={u.avatar}
-                        alt={u.name}
-                        className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
-                          {u.name.split(' ')[0]}
+
+                {/* 5-Role Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {[
+                    {
+                      role: 'BUYER' as UserRole,
+                      title: 'Consumer Buyer',
+                      badge: '🛒 Buyer Persona',
+                      badgeStyle: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+                      email: 'krishna.verma@example.com',
+                      password: 'password123',
+                      dest: '/marketplace',
+                      desc: 'Browse approved items, make price offers, book Porter delivery',
+                      userMatch: registeredUsers.find(u => u.role === 'BUYER') || registeredUsers[0],
+                    },
+                    {
+                      role: 'SELLER' as UserRole,
+                      title: 'Verified Seller',
+                      badge: '🏪 Merchant Store',
+                      badgeStyle: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+                      email: 'priya.patel@patelhome.in',
+                      password: 'password123',
+                      dest: '/dashboard?tab=listings',
+                      desc: 'Post pre-owned goods for admin verification, manage listings',
+                      userMatch: registeredUsers.find(u => u.role === 'SELLER') || registeredUsers[1],
+                    },
+                    {
+                      role: 'DRIVER' as UserRole,
+                      title: 'Driver Pilot',
+                      badge: '🚚 Porter Fleet Driver',
+                      badgeStyle: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+                      email: 'ramesh.driver@portex.in',
+                      password: 'password123',
+                      dest: '/driver',
+                      desc: 'Accept vehicle-matched rides (Tata Ace/Bike), verify OTPs & earn',
+                      userMatch: registeredUsers.find(u => u.role === 'DRIVER') || registeredUsers[3],
+                    },
+                    {
+                      role: 'ADMIN' as UserRole,
+                      title: 'Platform Admin',
+                      badge: '🛡️ Operations Admin',
+                      badgeStyle: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+                      email: 'admin@portex.in',
+                      password: 'admin123',
+                      dest: '/admin',
+                      desc: 'Approve seller products before live, manage vehicles & auto-messages',
+                      userMatch: registeredUsers.find(u => u.role === 'ADMIN') || registeredUsers[4],
+                    },
+                    {
+                      role: 'ENTERPRISE' as UserRole,
+                      title: 'Enterprise Shipper',
+                      badge: '🏢 B2B Commercial',
+                      badgeStyle: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+                      email: 'amit.sharma@sharmalogistics.in',
+                      password: 'password123',
+                      dest: '/parcel',
+                      desc: 'Bulk courier bookings, commercial freight parcels & GST invoices',
+                      userMatch: registeredUsers.find(u => u.role === 'ENTERPRISE') || registeredUsers[2],
+                    },
+                  ].map(item => {
+                    const targetUser = item.userMatch || {
+                      id: `usr_${item.role.toLowerCase()}`,
+                      name: item.title,
+                      email: item.email,
+                      phone: '+91 98765 00000',
+                      password: item.password,
+                      role: item.role,
+                      city: 'Lucknow',
+                      isVerified: true,
+                      rating: 5.0,
+                      totalDeals: 10,
+                      userIntent: 'ALL_IN_ONE',
+                      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+                    };
+
+                    return (
+                      <div
+                        key={item.role}
+                        className="p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-2.5 relative group"
+                      >
+                        <div>
+                          {/* Header Ribbon */}
+                          <div className="flex items-center justify-between gap-1 mb-1.5">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${item.badgeStyle}`}>
+                              {item.badge}
+                            </span>
+                            <span className="text-[10px] font-mono text-zinc-500">
+                              {item.dest}
+                            </span>
+                          </div>
+
+                          <h4 className="text-xs font-bold text-white tracking-tight">
+                            {targetUser.name}
+                          </h4>
+                          <p className="text-[10px] text-zinc-400 line-clamp-1 mt-0.5">
+                            {item.desc}
+                          </p>
+
+                          {/* Credentials display block */}
+                          <div className="mt-2 p-2 rounded-xl bg-black/60 border border-zinc-800/80 font-mono text-[10px] space-y-1">
+                            <div className="flex items-center justify-between text-zinc-300">
+                              <span className="text-zinc-500 font-sans font-bold">Email:</span>
+                              <span className="truncate ml-1 text-amber-300/90 select-all">{item.email}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-zinc-300">
+                              <span className="text-zinc-500 font-sans font-bold">Pass:</span>
+                              <span className="text-emerald-400 select-all">{item.password}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-[9px] text-slate-400 capitalize">{u.role.toLowerCase()}</div>
+
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-2 gap-1.5 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleAutoFill(item.email, item.password)}
+                            className="py-1.5 px-2 rounded-xl bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[10px] font-bold border border-zinc-700/80 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                            title="Auto-fill email and password in the login form"
+                          >
+                            <Copy className="w-3 h-3 text-zinc-400" />
+                            <span>Auto-Fill</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleQuickDemoLogin(targetUser as User)}
+                            className="py-1.5 px-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 text-[10px] font-black flex items-center justify-center gap-1 transition-transform hover:scale-[1.02] shadow-sm cursor-pointer"
+                            title={`One-tap direct login as ${item.title}`}
+                          >
+                            <Zap className="w-3 h-3 fill-zinc-950" />
+                            <span>1-Tap Login</span>
+                          </button>
+                        </div>
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
