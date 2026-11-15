@@ -457,6 +457,55 @@ export function getAutoVehicleForWeight(weightKg: number): { type: DeliveryVehic
   }
 }
 
+export function isVehicleMatched(orderVehicle?: DeliveryVehicleType, driverVehicle?: DeliveryVehicleType): boolean {
+  if (!orderVehicle || !driverVehicle) return false;
+  if (orderVehicle === driverVehicle) return true;
+
+  // 2-Wheeler strictly requires 2-Wheeler
+  if (orderVehicle === 'TWO_WHEELER') {
+    return driverVehicle === 'TWO_WHEELER';
+  }
+
+  // 3-Wheeler Auto / Electric Cargo
+  if (orderVehicle === 'THREE_WHEELER_AUTO' || orderVehicle === 'ELECTRIC_CARGO') {
+    return driverVehicle === 'THREE_WHEELER_AUTO' || driverVehicle === 'ELECTRIC_CARGO';
+  }
+
+  // Mini Truck / Large Commercial Fleet
+  const truckVehicles: DeliveryVehicleType[] = [
+    'TATA_ACE_MINI_TRUCK',
+    'PICKUP_8FT',
+    'TEMPO_CLOSED',
+    'EICHER_14FT',
+  ];
+  if (truckVehicles.includes(orderVehicle)) {
+    return truckVehicles.includes(driverVehicle);
+  }
+
+  return orderVehicle === driverVehicle;
+}
+
+export function getVehicleDisplayName(type?: DeliveryVehicleType): string {
+  switch (type) {
+    case 'TWO_WHEELER':
+      return '2-Wheeler (Express Bike)';
+    case 'THREE_WHEELER_AUTO':
+      return '3-Wheeler Auto Tempo';
+    case 'ELECTRIC_CARGO':
+      return 'Electric 3W Cargo';
+    case 'TATA_ACE_MINI_TRUCK':
+      return 'Tata Ace (Chota Hathi)';
+    case 'PICKUP_8FT':
+      return '8ft Commercial Pickup';
+    case 'TEMPO_CLOSED':
+      return 'Closed Container Tempo';
+    case 'EICHER_14FT':
+      return 'Eicher 14ft Truck';
+    default:
+      return 'Commercial Delivery Vehicle';
+  }
+}
+
 export const INITIAL_LISTINGS: Listing[] = [
   {
     id: 'lst-101',

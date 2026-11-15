@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 import confetti from 'canvas-confetti';
+import OlaMapsNavigation from '@/components/delivery/OlaMapsNavigation';
+import { isVehicleMatched, getVehicleDisplayName } from '@/lib/data/mockData';
 
 export default function DriverDashboardPage() {
   const {
@@ -37,6 +39,8 @@ export default function DriverDashboardPage() {
     acceptIncomingJob,
     rejectIncomingJob,
     currentUser,
+    userRole,
+    setUserRole,
     updateDeliveryStatus,
     acceptDeliveryJob,
     verifyPickupOtp,
@@ -83,15 +87,7 @@ export default function DriverDashboardPage() {
   // Filter jobs matching the driver's vehicle
   const broadcastJobs = allBroadcastJobs.filter(d => {
     if (!filterMyVehicleOnly) return true;
-    if (driverVehicleType === 'TWO_WHEELER') return d.vehicleType === 'TWO_WHEELER';
-    if (driverVehicleType === 'THREE_WHEELER_AUTO') {
-      return d.vehicleType === 'THREE_WHEELER_AUTO' || d.vehicleType === 'ELECTRIC_CARGO';
-    }
-    return (
-      d.vehicleType === 'TATA_ACE_MINI_TRUCK' ||
-      d.vehicleType === 'PICKUP_8FT' ||
-      d.vehicleType === 'EICHER_14FT'
-    );
+    return isVehicleMatched(d.vehicleType, driverVehicleType);
   });
 
   // Active trip assigned to this driver
@@ -106,12 +102,14 @@ export default function DriverDashboardPage() {
     ) || null;
 
   const handleAcceptJob = (jobId: string) => {
-    acceptDeliveryJob(jobId, {
+    const success = acceptDeliveryJob(jobId, {
       id: driverProfile.id,
       name: driverProfile.name,
       phone: driverProfile.phone,
     });
-    showToast(`Dispatch Job Accepted! Assigned to you with ${driverProfile.vehicleModel}.`);
+    if (success) {
+      confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+    }
   };
 
   const handleVerifyPickup = () => {
@@ -142,6 +140,33 @@ export default function DriverDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Role Verification Banner if user is not in DRIVER role */}
+      {currentUser.role !== 'DRIVER' && userRole !== 'DRIVER' && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-amber-500/10 border-2 border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-3 text-amber-300">
+            <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400 shrink-0">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-black text-sm text-amber-400">Driver Role Required for Ride Acceptance</h4>
+              <p className="text-zinc-300 mt-0.5">
+                You are currently viewing as <strong className="text-white uppercase font-mono">{userRole || currentUser.role}</strong>. Delivery orders can only be accepted by accounts logged in as Driver with specific matching vehicles.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setUserRole('DRIVER');
+              showToast('Switched to DRIVER role. You can now accept matching rides.');
+            }}
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 text-black font-black rounded-xl text-xs shadow-lg shadow-amber-500/20 shrink-0 cursor-pointer transition-transform hover:scale-105"
+          >
+            Switch to Driver Role
+          </button>
+        </div>
+      )}
+
       {/* Driver Top Status & Duty Toggle */}
       <div className="p-6 bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -236,57 +261,98 @@ export default function DriverDashboardPage() {
 
       {/* POPUP: Incoming Ride Request Notification Banner (When incomingJob matches driver's vehicle) */}
       {isDriverOnline && incomingJob && (
-        <div className="p-6 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-slate-900 rounded-3xl border-2 border-amber-500 shadow-2xl animate-in zoom-in-95 duration-200">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-black flex items-center justify-center font-black">
-                  <Radio className="w-6 h-6 animate-pulse" />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs uppercase tracking-wider font-mono font-black text-amber-400">
-                    🚨 INCOMING RIDE REQUEST FOR YOUR {incomingJob.vehicleType?.replace(/_/g, ' ')}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-black font-extrabold">
-                    ₹{incomingJob.fareAmount} PAYOUT
-                  </span>
-                </div>
-                <h3 className="text-base font-black text-white mt-1">
-                  {incomingJob.packageType}
-                </h3>
-                <div className="text-xs text-slate-300 flex items-center gap-4 mt-1 flex-wrap">
-                  <span>📍 From: <strong className="text-white">{incomingJob.pickupAddress}</strong></span>
-                  <span>🎯 To: <strong className="text-white">{incomingJob.dropAddress}</strong></span>
-                  <span>📦 {incomingJob.weightKg} kg &bull; {incomingJob.distanceKm} km</span>
-                </div>
-              </div>
-            </div>
+        (() => {
+          const isIncomingMatched = isVehicleMatched(incomingJob.vehicleType as any, driverVehicleType);
+          const reqVehicleName = getVehicleDisplayName(incomingJob.vehicleType as any);
 
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  handleAcceptJob(incomingJob.id);
-                  confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
-                }}
-                className="py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2 cursor-pointer transition-transform hover:scale-105"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>ACCEPT RIDE (₹{incomingJob.fareAmount})</span>
-              </button>
-              <button
-                type="button"
-                onClick={rejectIncomingJob}
-                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700"
-              >
-                Decline
-              </button>
+          return (
+            <div className={`p-6 rounded-3xl border-2 shadow-2xl animate-in zoom-in-95 duration-200 ${
+              isIncomingMatched
+                ? 'bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-slate-900 border-amber-500'
+                : 'bg-gradient-to-r from-rose-500/20 via-slate-900 to-slate-950 border-rose-500/60'
+            }`}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                      isIncomingMatched ? 'bg-amber-400' : 'bg-rose-400'
+                    }`} />
+                    <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center font-black ${
+                      isIncomingMatched
+                        ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-black'
+                        : 'bg-gradient-to-tr from-rose-500 to-amber-500 text-white'
+                    }`}>
+                      <Radio className="w-6 h-6 animate-pulse" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs uppercase tracking-wider font-mono font-black ${
+                        isIncomingMatched ? 'text-amber-400' : 'text-rose-400'
+                      }`}>
+                        🚨 INCOMING RIDE REQUEST: {reqVehicleName}
+                      </span>
+                      {isIncomingMatched ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-500/30">
+                          ✓ VEHICLE MATCHED ({driverProfile.vehicleModel})
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-extrabold border border-rose-500/30">
+                          🚫 REQUIRES {reqVehicleName}
+                        </span>
+                      )}
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-black font-extrabold">
+                        ₹{incomingJob.fareAmount} PAYOUT
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-white mt-1">
+                      {incomingJob.packageType}
+                    </h3>
+                    <div className="text-xs text-slate-300 flex items-center gap-4 mt-1 flex-wrap">
+                      <span>📍 From: <strong className="text-white">{incomingJob.pickupAddress}</strong></span>
+                      <span>🎯 To: <strong className="text-white">{incomingJob.dropAddress}</strong></span>
+                      <span>📦 {incomingJob.weightKg} kg &bull; {incomingJob.distanceKm} km</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {isIncomingMatched ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAcceptJob(incomingJob.id);
+                      }}
+                      className="py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2 cursor-pointer transition-transform hover:scale-105"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>ACCEPT RIDE (₹{incomingJob.fareAmount})</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDriverVehicleType(incomingJob.vehicleType as any);
+                        handleAcceptJob(incomingJob.id);
+                      }}
+                      className="py-3 px-5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 text-black font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-105"
+                    >
+                      <Truck className="w-4 h-4 text-black" />
+                      <span>Switch to {incomingJob.vehicleType} &amp; Accept</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={rejectIncomingJob}
+                    className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 cursor-pointer"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()
       )}
 
       {/* KPI Earnings Cards */}
@@ -389,67 +455,104 @@ export default function DriverDashboardPage() {
 
           {broadcastJobs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {broadcastJobs.map(job => (
-                <div
-                  key={job.id}
-                  className="p-5 bg-slate-900/90 rounded-2xl border border-blue-500/30 space-y-4 hover:border-blue-400 transition-colors shadow-lg"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="text-[10px] font-mono text-blue-400 font-bold block">
-                        {job.trackingNumber}
-                      </span>
-                      <h3 className="font-extrabold text-sm text-white mt-0.5">
-                        {job.packageType}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-semibold">
-                          {job.vehicleType === 'TWO_WHEELER'
-                            ? '🏍️ 2-Wheeler Bike'
-                            : job.vehicleType === 'THREE_WHEELER_AUTO'
-                            ? '🛺 3-Wheeler Auto'
-                            : '🚚 Tata Ace Mini Truck'}
+              {broadcastJobs.map(job => {
+                const isJobMatched = isVehicleMatched(job.vehicleType, driverVehicleType);
+                const reqVehicleName = getVehicleDisplayName(job.vehicleType);
+
+                return (
+                  <div
+                    key={job.id}
+                    className={`p-5 rounded-2xl border space-y-4 transition-colors shadow-lg ${
+                      isJobMatched
+                        ? 'bg-slate-900/90 border-blue-500/30 hover:border-blue-400'
+                        : 'bg-slate-950/90 border-amber-500/30 hover:border-amber-400'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] font-mono text-blue-400 font-bold block">
+                          {job.trackingNumber}
                         </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono">
-                          Weight: {job.packageWeightKg || 2.5} kg
-                        </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold">
-                          {job.distanceKm} km
+                        <h3 className="font-extrabold text-sm text-white mt-0.5">
+                          {job.packageType}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {isJobMatched ? (
+                            <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> Vehicle Matched ({reqVehicleName})
+                            </span>
+                          ) : (
+                            <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" /> Requires {reqVehicleName}
+                            </span>
+                          )}
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono">
+                            Weight: {job.packageWeightKg || 2.5} kg
+                          </span>
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold">
+                            {job.distanceKm} km
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 block uppercase font-bold">Driver Payout</span>
+                        <span className="text-lg font-black text-emerald-400">
+                          ₹{(job.fare?.total || job.pricing?.totalAmount || 380).toLocaleString('en-IN')}
                         </span>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Driver Payout</span>
-                      <span className="text-lg font-black text-emerald-400">
-                        ₹{(job.fare?.total || job.pricing?.totalAmount || 380).toLocaleString('en-IN')}
-                      </span>
+                    <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-400">Pickup:</span>
+                        <span className="font-semibold text-white truncate">{job.pickup.address}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+                        <span className="text-slate-400">Drop:</span>
+                        <span className="font-semibold text-white truncate">{job.drop.address}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                      <span className="text-slate-400">Pickup:</span>
-                      <span className="font-semibold text-white truncate">{job.pickup.address}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
-                      <span className="text-slate-400">Drop:</span>
-                      <span className="font-semibold text-white truncate">{job.drop.address}</span>
-                    </div>
+                    {isJobMatched ? (
+                      <button
+                        type="button"
+                        onClick={() => handleAcceptJob(job.id)}
+                        className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>ACCEPT RIDE (₹{(job.fare?.total || job.pricing?.totalAmount || 380).toLocaleString('en-IN')})</span>
+                      </button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDriverVehicleType(job.vehicleType);
+                            handleAcceptJob(job.id);
+                          }}
+                          className="flex-1 py-3 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 text-black font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-transform hover:scale-[1.01] cursor-pointer"
+                        >
+                          <Truck className="w-4 h-4 text-black" />
+                          <span>Switch to {job.vehicleType.split('_')[0]} &amp; Accept</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            showToast(`🚫 Vehicle Mismatch! This order requires ${reqVehicleName}. Your active vehicle is ${driverProfile.vehicleModel}.`);
+                          }}
+                          className="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold text-xs rounded-xl border border-slate-700 cursor-not-allowed"
+                          title="Vehicle mismatch"
+                        >
+                          Blocked
+                        </button>
+                      </div>
+                    )}
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleAcceptJob(job.id)}
-                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>ACCEPT RIDE (₹{(job.fare?.total || job.pricing?.totalAmount || 380).toLocaleString('en-IN')})</span>
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="p-8 text-center bg-slate-950/40 rounded-2xl border border-dashed border-slate-800 space-y-3">
@@ -504,27 +607,23 @@ export default function DriverDashboardPage() {
       {activeTab === 'trips' && (
         <div className="space-y-6">
           {activeTrip && activeTrip.status !== 'DELIVERED' ? (
-            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-500/40 shadow-xl space-y-6">
-              {/* Trip Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900 rounded-2xl border border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
-                    <Truck className="w-6 h-6" />
+                  <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center font-black">
+                    <Truck className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                      Active Assigned Delivery
-                    </span>
-                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
-                      {activeTrip.packageType}
-                    </h3>
-                    <p className="text-xs text-slate-400 font-mono">
-                      {activeTrip.trackingNumber} &bull; {activeTrip.distanceKm} km &bull;{' '}
-                      {activeTrip.vehicleType === 'TWO_WHEELER'
-                        ? '2-Wheeler Bike'
-                        : activeTrip.vehicleType === 'THREE_WHEELER_AUTO'
-                        ? '3-Wheeler Auto'
-                        : 'Tata Ace Truck'}
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-extrabold text-sm text-white">
+                        {activeTrip.packageType}
+                      </h3>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                        {activeTrip.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-mono mt-0.5">
+                      #{activeTrip.trackingNumber} &bull; Required Vehicle: <strong className="text-amber-400">{getVehicleDisplayName(activeTrip.vehicleType)}</strong>
                     </p>
                   </div>
                 </div>
@@ -532,163 +631,37 @@ export default function DriverDashboardPage() {
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/tracking/${activeTrip.id}`}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20"
+                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-colors"
                   >
                     <Navigation className="w-3.5 h-3.5" />
-                    <span>Open Live Map</span>
+                    <span>Customer Tracker</span>
                   </Link>
 
                   <a
                     href={`tel:${activeTrip.drop.contactPhone}`}
-                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-700"
                   >
                     <Phone className="w-3.5 h-3.5" />
-                    <span>Call Customer</span>
+                    <span>Call Drop Contact</span>
                   </a>
                 </div>
               </div>
 
-              {/* Waypoints */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
-                    1. Sender Pickup Point
-                  </span>
-                  <p className="font-bold text-slate-900 dark:text-white">{activeTrip.pickup.contactName}</p>
-                  <p className="text-slate-600 dark:text-slate-400">{activeTrip.pickup.address}</p>
-                  <div className="pt-1 text-[11px] text-slate-500 flex items-center justify-between">
-                    <span>Phone: <strong>{activeTrip.pickup.contactPhone}</strong></span>
-                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
-                      Pickup OTP: {activeTrip.pickupOtp || activeTrip.pickup?.otp || '4921'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 block">
-                    2. Buyer Destination Drop
-                  </span>
-                  <p className="font-bold text-slate-900 dark:text-white">{activeTrip.drop.contactName}</p>
-                  <p className="text-slate-600 dark:text-slate-400">{activeTrip.drop.address}</p>
-                  <div className="pt-1 text-[11px] text-slate-500 flex items-center justify-between">
-                    <span>Phone: <strong>{activeTrip.drop.contactPhone}</strong></span>
-                    <span className="font-mono text-blue-600 dark:text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded">
-                      Drop OTP: {activeTrip.dropOtp || activeTrip.drop?.otp || '8302'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* STEP 1: PICKUP OTP VERIFICATION (When arriving at sender location) */}
-              {(activeTrip.status === 'DRIVER_ASSIGNED' ||
-                activeTrip.status === 'DRIVER_ARRIVING_PICKUP' ||
-                activeTrip.status === 'BOOKING_CREATED') && (
-                <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-500/40 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm">
-                      <KeyRound className="w-5 h-5" />
-                      <span>Step 1: Exchange Pickup OTP with Sender</span>
-                    </div>
-                    <span className="text-xs font-mono text-amber-600 dark:text-amber-400 font-bold bg-amber-100 dark:bg-amber-900/50 px-2.5 py-1 rounded-lg">
-                      Sender OTP: {activeTrip.pickupOtp || activeTrip.pickup?.otp || '4921'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Once you arrive at the sender's location, verify the package contents and ask the sender for their 4-digit Pickup OTP to authorize handoff and begin transit.
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <input
-                      type="text"
-                      maxLength={4}
-                      value={pickupOtpInput}
-                      onChange={e => setPickupOtpInput(e.target.value.replace(/\D/g, ''))}
-                      placeholder="Enter 4-digit Pickup OTP"
-                      className="w-full sm:w-64 p-3 bg-white dark:bg-slate-900 border-2 border-amber-400 rounded-xl text-center text-lg font-mono font-black tracking-widest text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={handleVerifyPickup}
-                      className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Verify Pickup OTP &amp; Start Transit</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 2: IN TRANSIT CONTROLS */}
-              {(activeTrip.status === 'ITEM_PICKED_UP' || activeTrip.status === 'IN_TRANSIT') && (
-                <div className="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500/40 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-bold text-sm">
-                      <Truck className="w-5 h-5 animate-pulse" />
-                      <span>Step 2: Cargo In Transit to Customer Drop Location</span>
-                    </div>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-400">
-                      En Route
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Package picked up successfully. Follow live GPS navigation to the destination. Once you reach the destination, mark arrived to request the delivery OTP from the buyer.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateDeliveryStatus(activeTrip.id, 'OUT_FOR_DELIVERY');
-                      showToast('Arrived at customer drop destination. Ready for delivery OTP.');
-                    }}
-                    className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
-                  >
-                    <Navigation className="w-4 h-4" />
-                    <span>Arrived at Customer Location (Out for Delivery)</span>
-                  </button>
-                </div>
-              )}
-
-              {/* STEP 3: DELIVERY OTP VERIFICATION & COMPLETION */}
-              {activeTrip.status === 'OUT_FOR_DELIVERY' && (
-                <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500/40 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
-                      <KeyRound className="w-5 h-5" />
-                      <span>Step 3: Exchange Delivery OTP with Buyer</span>
-                    </div>
-                    <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-1 rounded-lg">
-                      Buyer OTP: {activeTrip.dropOtp || activeTrip.drop?.otp || '8302'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Hand over the package to the buyer and ask for their 4-digit Delivery OTP to mark the trip completed and instantly collect payout into your driver wallet.
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <input
-                      type="text"
-                      maxLength={4}
-                      value={dropOtpInput}
-                      onChange={e => setDropOtpInput(e.target.value.replace(/\D/g, ''))}
-                      placeholder="Enter 4-digit Delivery OTP"
-                      className="w-full sm:w-64 p-3 bg-white dark:bg-slate-900 border-2 border-emerald-400 rounded-xl text-center text-lg font-mono font-black tracking-widest text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={handleVerifyDrop}
-                      className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Complete Delivery &amp; Collect Payment</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* Ola Maps Live Turn-by-Turn GPS HUD & Integrated Pickup/Drop OTP Handshake */}
+              <OlaMapsNavigation
+                booking={activeTrip}
+                isDriverView={true}
+                onPickupOtpSubmit={(otp) => {
+                  return verifyPickupOtp(activeTrip.id, otp);
+                }}
+                onDropOtpSubmit={(otp) => {
+                  return verifyDeliveryOtp(activeTrip.id, otp, 'delivery');
+                }}
+                onArrivedAtDrop={() => {
+                  updateDeliveryStatus(activeTrip.id, 'OUT_FOR_DELIVERY');
+                  showToast('Arrived at drop location! Ready for recipient Drop OTP.');
+                }}
+              />
             </div>
           ) : (
             <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">

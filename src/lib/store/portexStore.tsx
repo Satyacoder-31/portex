@@ -25,6 +25,8 @@ import {
   INITIAL_RECENT_SEARCHES,
   getAutoVehicleForWeight,
   VEHICLE_OPTIONS,
+  isVehicleMatched,
+  getVehicleDisplayName,
 } from '@/lib/data/mockData';
 
 interface IncomingJobRequest {
@@ -63,7 +65,7 @@ interface PortexStoreContextType {
   ) => DeliveryBooking;
   updateDeliveryStatus: (id: string, newStage: DeliveryStatusStage) => void;
   updateDeliveryVehicle: (id: string, vehicleType: DeliveryVehicleType) => void;
-  acceptDeliveryJob: (deliveryId: string, driver?: Partial<User>) => void;
+  acceptDeliveryJob: (deliveryId: string, driver?: Partial<User>) => boolean;
   verifyPickupOtp: (deliveryId: string, enteredOtp: string) => boolean;
   verifyDeliveryOtp: (id: string, otp: string, type: 'pickup' | 'delivery') => boolean;
   completeProofOfDelivery: (id: string, signature: string, photoUrl?: string) => void;
@@ -91,7 +93,7 @@ interface PortexStoreContextType {
   driverVehicleType: DeliveryVehicleType;
   setDriverVehicleType: (type: DeliveryVehicleType) => void;
   incomingJob: IncomingJobRequest | null;
-  acceptIncomingJob: (jobId: string) => void;
+  acceptIncomingJob: (jobId: string) => boolean;
   rejectIncomingJob: () => void;
   triggerIncomingJobRadar: () => void;
   driverEarnings: {
@@ -1156,7 +1158,27 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     showToast(`Admin updated shipping vehicle to: ${vehName}`);
   };
 
-  const acceptDeliveryJob = (deliveryId: string, driver?: Partial<User>) => {
+  const acceptDeliveryJob = (deliveryId: string, driver?: Partial<User>): boolean => {
+    // 1. Enforce Driver Role
+    if (currentUser.role !== 'DRIVER' && userRole !== 'DRIVER') {
+      showToast('🚫 Access Denied: Only users logged in as DRIVER can accept delivery orders.');
+      return false;
+    }
+
+    // 2. Enforce Specific Vehicle Requirement
+    const targetBooking = deliveries.find(d => d.id === deliveryId);
+    if (!targetBooking) {
+      showToast('Order not found or no longer available.');
+      return false;
+    }
+
+    if (!isVehicleMatched(targetBooking.vehicleType, driverVehicleType)) {
+      const requiredName = getVehicleDisplayName(targetBooking.vehicleType);
+      const activeName = getVehicleDisplayName(driverVehicleType);
+      showToast(`🚫 Vehicle Mismatch! This order requires ${requiredName}, but your active vehicle is ${activeName}. Please switch your vehicle.`);
+      return false;
+    }
+
     const driverName = driver?.name || currentUser.name || 'Mohd. Imran Khan';
     const driverPhone = driver?.phone || currentUser.phone || '+91 98390 14592';
     const driverAvatar =
@@ -1231,6 +1253,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     });
 
     showToast(`Trip accepted! Assigned to you with ${driverModel}. Proceed to pickup.`);
+    return true;
   };
 
   const verifyPickupOtp = (deliveryId: string, enteredOtp: string): boolean => {
@@ -1242,14 +1265,14 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     if (!booking) return false;
 
     if (type === 'pickup' && (otp === booking.pickup.otp || otp === '1234')) {
-      updateDeliveryStatus(id, 'ITEM_PICKED_UP');
-      showToast('Pickup OTP Verified successfully! Cargo dispatched.');
+      updateDeliveryStatus(id, 'IN_TRANSIT');
+      showToast('🚀 Pickup OTP Verified! Ride started & Ola Maps Live Turn-by-Turn Navigation active.');
       return true;
     }
 
     if (type === 'delivery' && (otp === booking.drop.otp || otp === '1234')) {
       updateDeliveryStatus(id, 'DELIVERED');
-      showToast('Delivery OTP Verified! Trip completed.');
+      showToast('🎉 Delivery OTP Verified! Ride completed & permanent delivery record saved.');
       return true;
     }
 
@@ -1581,7 +1604,24 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     showToast('🚨 Incoming Portex Dispatch Ping received on radar!');
   };
 
-  const acceptIncomingJob = (jobId: string) => {
+  const acceptIncomingJob = (jobId: string): boolean => {
+    // 1. Role check
+    if (currentUser.role !== 'DRIVER' && userRole !== 'DRIVER') {
+      showToast('🚫 Access Denied: Only users logged in as DRIVER can accept rides.');
+      return false;
+    }
+
+    // 2. Vehicle check
+    if (incomingJob) {
+      const matched = isVehicleMatched(incomingJob.vehicleType as DeliveryVehicleType, driverVehicleType);
+      if (!matched) {
+        const requiredName = getVehicleDisplayName(incomingJob.vehicleType as DeliveryVehicleType);
+        const activeName = getVehicleDisplayName(driverVehicleType);
+        showToast(`🚫 Vehicle Mismatch! This ride requires ${requiredName}, but you are driving ${activeName}.`);
+        return false;
+      }
+    }
+
     setIncomingJob(null);
     updateDeliveryStatus(jobId, 'DRIVER_ASSIGNED');
     setDriverEarnings(prev => ({
@@ -1590,6 +1630,7 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       completedTrips: prev.completedTrips + 1,
     }));
     showToast('Delivery job accepted! Route loaded.');
+    return true;
   };
 
   const rejectIncomingJob = () => {

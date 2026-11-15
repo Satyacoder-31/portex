@@ -22,6 +22,7 @@ import {
 import { usePortex } from '@/lib/store/portexStore';
 import LiveMap from '@/components/common/LiveMap';
 import InvoiceModal from '@/components/common/InvoiceModal';
+import OlaMapsNavigation from '@/components/delivery/OlaMapsNavigation';
 
 export default function TrackingDetailPage() {
   const params = useParams();
@@ -37,6 +38,7 @@ export default function TrackingDetailPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPodModal, setShowPodModal] = useState(false);
   const [signatureText, setSignatureText] = useState('Krishna Verma');
+  const [mapMode, setMapMode] = useState<'ola' | 'classic'>('ola');
 
   if (!booking) {
     return (
@@ -125,16 +127,50 @@ export default function TrackingDetailPage() {
       {/* Main Grid: Live Map (Left 7 Cols) + Status Timeline & OTP (Right 5 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Live Map & Driver Telemetry (7 Cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          <LiveMap
-            pickupAddress={booking.pickup.address}
-            dropAddress={booking.drop.address}
-            vehicleType={booking.vehicleType}
-            driverName={booking.driverName}
-            driverPlate={booking.driverVehiclePlate}
-            statusStage={booking.status}
-            heightClass="h-[280px] sm:h-[460px]"
-          />
+        <div className="lg:col-span-7 space-y-4">
+          <div className="flex items-center justify-between p-2 bg-slate-900 rounded-2xl border border-slate-800 text-xs font-bold">
+            <div className="flex items-center gap-2 px-2 text-zinc-400">
+              <span className="text-[10px] uppercase tracking-wider text-amber-400 font-mono">Live Tracking View:</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setMapMode('ola')}
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  mapMode === 'ola'
+                    ? 'bg-amber-400 text-black font-black shadow-md shadow-amber-400/20'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                ⚡ Ola Maps GPS HUD
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapMode('classic')}
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  mapMode === 'classic'
+                    ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-500/20'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                🗺️ Standard Radar
+              </button>
+            </div>
+          </div>
+
+          {mapMode === 'ola' ? (
+            <OlaMapsNavigation booking={booking} isDriverView={false} />
+          ) : (
+            <LiveMap
+              pickupAddress={booking.pickup.address}
+              dropAddress={booking.drop.address}
+              vehicleType={booking.vehicleType}
+              driverName={booking.driverName}
+              driverPlate={booking.driverVehiclePlate}
+              statusStage={booking.status}
+              heightClass="h-[280px] sm:h-[460px]"
+            />
+          )}
 
           {/* Driver Contact & Vehicle Profile Card */}
           {booking.status === 'BOOKING_CREATED' || !booking.driverName ? (
