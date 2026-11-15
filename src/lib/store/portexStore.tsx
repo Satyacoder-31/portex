@@ -867,6 +867,18 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
 
+    // Mark associated product as SOLD so it no longer shows in buyer feeds
+    if (booking.listingId) {
+      setListings(prev => {
+        const updated = prev.map(l => (l.id === booking.listingId ? { ...l, status: 'SOLD' as const } : l));
+        try {
+          localStorage.setItem('portex_listings', JSON.stringify(updated));
+        } catch {}
+        broadcastSync('LISTINGS_UPDATED', { listings: updated });
+        return updated;
+      });
+    }
+
     const incomingJobData: IncomingJobRequest = {
       id: newBooking.id,
       customerName: newBooking.customerName,
@@ -976,7 +988,12 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
           if (thisIdx < targetIdx) {
             return { ...t, completed: true, active: false };
           } else if (thisIdx === targetIdx) {
-            return { ...t, completed: false, active: true, time: 'Updated just now' };
+            return {
+              ...t,
+              completed: newStage === 'DELIVERED',
+              active: newStage !== 'DELIVERED',
+              time: newStage === 'DELIVERED' ? 'Delivered & Confirmed' : 'Updated just now',
+            };
           } else {
             return { ...t, completed: false, active: false };
           }
@@ -991,6 +1008,32 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       try {
         localStorage.setItem('portex_deliveries', JSON.stringify(updated));
       } catch {}
+
+      // If delivery is complete, settle records and ensure listing is marked SOLD
+      if (newStage === 'DELIVERED') {
+        const deliveredItem = updated.find(d => d.id === id);
+        if (deliveredItem?.listingId) {
+          setListings(lPrev => {
+            const lUpdated = lPrev.map(l => (l.id === deliveredItem.listingId ? { ...l, status: 'SOLD' as const } : l));
+            try {
+              localStorage.setItem('portex_listings', JSON.stringify(lUpdated));
+            } catch {}
+            broadcastSync('LISTINGS_UPDATED', { listings: lUpdated });
+            return lUpdated;
+          });
+        }
+
+        // Increment driver earnings & trip stats
+        const fare = deliveredItem?.pricing?.totalAmount || 380;
+        setDriverEarnings(prev => ({
+          ...prev,
+          today: prev.today + fare,
+          thisWeek: prev.thisWeek + fare,
+          thisMonth: prev.thisMonth + fare,
+          completedTrips: prev.completedTrips + 1,
+        }));
+      }
+
       broadcastSync('STAGE_UPDATED', { id, stage: newStage });
       return updated;
     });
@@ -1117,17 +1160,22 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
   };
 
   const completeProofOfDelivery = (id: string, signature: string, photoUrl?: string) => {
-    setDeliveries(prev =>
-      prev.map(d => {
+    updateDeliveryStatus(id, 'DELIVERED');
+    setDeliveries(prev => {
+      const updated = prev.map(d => {
         if (d.id !== id) return d;
         return {
           ...d,
           podSignature: signature,
           podImage: photoUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
-          status: 'DELIVERED',
+          status: 'DELIVERED' as const,
         };
-      })
-    );
+      });
+      try {
+        localStorage.setItem('portex_deliveries', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     showToast('Digital Proof of Delivery (POD) recorded!');
   };
 
@@ -1399,6 +1447,21 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       }
       return next;
     });
+
+    // If offer is accepted, the deal is closed: mark product as SOLD so it disappears from buyer browsing
+    if (status === 'ACCEPTED') {
+      const targetConv = conversations.find(c => c.id === conversationId);
+      if (targetConv?.listingId) {
+        setListings(prev => {
+          const updated = prev.map(l => (l.id === targetConv.listingId ? { ...l, status: 'SOLD' as const } : l));
+          try {
+            localStorage.setItem('portex_listings', JSON.stringify(updated));
+          } catch {}
+          broadcastSync('LISTINGS_UPDATED', { listings: updated });
+          return updated;
+        });
+      }
+    }
 
     showToast(`Offer ${status.toLowerCase()}!`);
   };

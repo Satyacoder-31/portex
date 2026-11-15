@@ -213,7 +213,7 @@ function ChatContent() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-6">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-3 h-[calc(100dvh-75px)] md:h-[calc(100vh-85px)] flex flex-col">
       {/* Hidden file input for chat photo attachments */}
       <input
         type="file"
@@ -223,10 +223,10 @@ function ChatContent() {
         className="hidden"
       />
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden h-[calc(100vh-140px)] md:h-[760px] grid grid-cols-1 md:grid-cols-12">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-xl overflow-hidden flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12">
         {/* Left Thread List (Hidden on mobile when thread is active) */}
         <aside
-          className={`md:col-span-4 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/50 ${
+          className={`md:col-span-4 border-r border-slate-200 dark:border-zinc-800 flex flex-col h-full min-h-0 bg-slate-50/50 dark:bg-zinc-900/50 ${
             showMobileThread ? 'hidden md:flex' : 'flex col-span-12'
           }`}
         >
@@ -409,7 +409,7 @@ function ChatContent() {
 
         {/* Right Active Message Thread */}
         <main
-          className={`md:col-span-8 flex flex-col h-full bg-white dark:bg-slate-950 ${
+          className={`md:col-span-8 flex flex-col h-full min-h-0 bg-white dark:bg-zinc-950 ${
             showMobileThread ? 'flex col-span-12' : 'hidden md:flex'
           }`}
         >
@@ -675,21 +675,21 @@ function ChatContent() {
             ))}
           </div>
 
-          {/* Message Input Bar */}
+          {/* Message Input Bar (Fixed, fully visible and styled) */}
           <form
             onSubmit={handleSend}
-            className="p-2.5 sm:p-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 bg-slate-50/60 dark:bg-slate-900/60"
+            className="p-2.5 sm:p-3.5 border-t border-slate-200 dark:border-zinc-800 flex items-center gap-2 bg-slate-50 dark:bg-zinc-900/95 flex-shrink-0 sticky bottom-0 z-20 shadow-lg"
           >
             {/* Real photo upload trigger */}
             <button
               type="button"
               disabled={isUploadingPhoto}
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 text-slate-500 hover:text-amber-500 dark:text-zinc-400 dark:hover:text-amber-400 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors flex-shrink-0 cursor-pointer"
               title="Attach photo"
             >
               {isUploadingPhoto ? (
-                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
               ) : (
                 <ImageIcon className="w-5 h-5" />
               )}
@@ -697,22 +697,23 @@ function ChatContent() {
 
             <input
               type="text"
-              placeholder="Type message, inquiry or negotiate delivery..."
+              placeholder="Type message, negotiate deal or reply as seller..."
               value={inputText}
               onChange={e => setInputText(e.target.value)}
-              className="flex-1 py-2 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+              className="flex-1 py-2.5 px-3.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
 
             <button
               type="submit"
               disabled={!inputText.trim()}
-              className={`p-2.5 rounded-xl transition-all ${
+              className={`p-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
                 inputText.trim()
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20'
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                  ? 'bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black shadow-md shadow-amber-500/20'
+                  : 'bg-slate-200 dark:bg-zinc-800 text-zinc-500 cursor-not-allowed'
               }`}
             >
               <Send className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs font-black">Send</span>
             </button>
           </form>
         </main>

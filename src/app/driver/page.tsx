@@ -45,10 +45,12 @@ export default function DriverDashboardPage() {
     showToast,
   } = usePortex();
 
-  const [activeTab, setActiveTab] = useState<'trips' | 'earnings' | 'vehicle' | 'kyc'>('trips');
+  const [activeTab, setActiveTab] = useState<'trips' | 'history' | 'earnings' | 'vehicle' | 'kyc'>('trips');
   const [pickupOtpInput, setPickupOtpInput] = useState('');
   const [dropOtpInput, setDropOtpInput] = useState('');
   const [filterMyVehicleOnly, setFilterMyVehicleOnly] = useState<boolean>(true);
+
+  const completedDeliveries = deliveries.filter(d => d.status === 'DELIVERED');
 
   // Dynamic driver profile adapting to active vehicle
   const driverProfile = {
@@ -476,9 +478,10 @@ export default function DriverDashboardPage() {
       )}
 
       {/* Tabs navigation */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6 text-xs font-bold">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-6 text-xs font-bold overflow-x-auto pb-1">
         {[
           { id: 'trips', label: 'Active Trip & Delivery Terminal' },
+          { id: 'history', label: `Completed Trip Records (${completedDeliveries.length})` },
           { id: 'earnings', label: 'Earnings & Bank Payouts' },
           { id: 'vehicle', label: 'Vehicle Management' },
           { id: 'kyc', label: 'KYC & Commercial License' },
@@ -486,7 +489,7 @@ export default function DriverDashboardPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`pb-3 transition-colors relative ${
+            className={`pb-3 transition-colors relative whitespace-nowrap ${
               activeTab === tab.id
                 ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -698,6 +701,86 @@ export default function DriverDashboardPage() {
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 Keep Duty Status ON to receive incoming broadcast trip notifications when buyers place orders.
               </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: Completed Trip Records */}
+      {activeTab === 'history' && (
+        <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                Completed Trip Records &amp; Proof of Delivery (POD)
+              </h3>
+              <p className="text-xs text-slate-500">
+                Official delivery records saved permanently for your partner payout settlement
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-black text-xs border border-emerald-500/20">
+              {completedDeliveries.length} Delivered Trips Recorded
+            </span>
+          </div>
+
+          {completedDeliveries.length > 0 ? (
+            <div className="space-y-3">
+              {completedDeliveries.map(del => (
+                <div
+                  key={del.id}
+                  className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
+                >
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-black text-blue-600 dark:text-blue-400 text-sm">
+                        {del.trackingNumber}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-black text-[10px] uppercase border border-emerald-500/30">
+                        ✓ DELIVERED &amp; OTP VERIFIED
+                      </span>
+                    </div>
+
+                    <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {del.packageType} &bull; {del.packageWeightKg} kg
+                    </h4>
+
+                    <div className="space-y-1 text-slate-600 dark:text-slate-300 text-[11px]">
+                      <div>
+                        <span className="text-slate-400">Sender / Pickup:</span> {del.pickup.contactName} ({del.pickup.address})
+                      </div>
+                      <div>
+                        <span className="text-slate-400">Recipient / Drop:</span> {del.drop.contactName} ({del.drop.address})
+                      </div>
+                    </div>
+
+                    <div className="text-[10px] text-slate-400 font-mono pt-1">
+                      Drop OTP: {del.drop.otp} &bull; Completed: {del.timeline.find(t => t.stage === 'DELIVERED')?.time || del.createdAt}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:items-end justify-between gap-2 flex-shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200 dark:border-slate-700">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block sm:text-right">Driver Payout</span>
+                      <span className="text-lg font-black text-emerald-500 block sm:text-right">
+                        ₹{(del.fare?.total || del.pricing?.totalAmount || 380).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    <Link
+                      href={`/tracking/${del.trackingNumber}`}
+                      className="py-1.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>View Receipt / POD</span>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-500 text-xs">
+              No completed trips yet. When you complete an assigned delivery, its full record will appear here.
             </div>
           )}
         </div>

@@ -89,6 +89,14 @@ export default function AdminPage() {
 
   const activeChatMessages = messages[selectedChatId] || [];
 
+  // Logistics & Delivery filter
+  const [deliveryFilter, setDeliveryFilter] = useState<'ALL' | 'ACTIVE' | 'DELIVERED'>('ALL');
+  const filteredDeliveries = deliveries.filter(d => {
+    if (deliveryFilter === 'ACTIVE') return d.status !== 'DELIVERED' && d.status !== 'CANCELLED';
+    if (deliveryFilter === 'DELIVERED') return d.status === 'DELIVERED';
+    return true;
+  });
+
   // Product verification filter
   const [productFilter, setProductFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   // Local state for admin vehicle selections on products
@@ -425,17 +433,40 @@ export default function AdminPage() {
       {/* TAB 2: LOGISTICS & FLEET DISPATCH MANAGEMENT */}
       {activeTab === 'deliveries' && (
         <div className="space-y-6">
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h2 className="text-lg font-black text-slate-900 dark:text-white">
-              Logistics Fleet Dispatch &amp; Live OTP Control
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Manage automatic vehicle assignment (Bike, Auto, Truck), view live Pickup and Drop OTPs, and monitor broadcast driver dispatch status.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                Logistics Fleet Dispatch &amp; Live OTP Control
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Manage automatic vehicle assignment (Bike, Auto, Truck), view live Pickup and Drop OTPs, and monitor permanent delivery completion records.
+              </p>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs flex-shrink-0">
+              {(['ALL', 'ACTIVE', 'DELIVERED'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setDeliveryFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    deliveryFilter === f
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {f === 'ALL'
+                    ? `All (${deliveries.length})`
+                    : f === 'ACTIVE'
+                    ? `Active In-Transit (${deliveries.filter(d => d.status !== 'DELIVERED').length})`
+                    : `Delivered (${deliveries.filter(d => d.status === 'DELIVERED').length})`}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-4">
-            {deliveries.map(delivery => (
+            {filteredDeliveries.map(delivery => (
               <div
                 key={delivery.id}
                 className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5"

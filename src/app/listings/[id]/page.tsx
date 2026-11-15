@@ -162,6 +162,39 @@ export default function ListingDetailPage() {
         </div>
       )}
 
+      {/* Product Sold & Closed Notice */}
+      {listing.status === 'SOLD' && (
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-zinc-900 to-amber-950/40 border-2 border-amber-500/40 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-amber-500/5 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500 text-zinc-950 rounded-2xl flex-shrink-0 font-black">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-black uppercase tracking-wider">
+                  Item Sold &bull; Closed
+                </span>
+                <span className="text-xs text-amber-400 font-bold">
+                  Purchase Completed
+                </span>
+              </div>
+              <h3 className="text-sm font-black text-white mt-0.5">
+                Negotiation Completed &bull; Product Has Been Purchased
+              </h3>
+              <p className="text-xs text-zinc-400">
+                This item has been successfully bought and dispatched via Porter logistics. It is no longer open for buyer checkout.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/marketplace"
+            className="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs border border-zinc-700 flex items-center gap-1.5 transition-colors"
+          >
+            <span>Browse Available Items</span>
+          </Link>
+        </div>
+      )}
+
       {/* OLX-Style Inactive / Expired Notice Banner */}
       {listing.status === 'EXPIRED' && (
         <div className="p-4 sm:p-5 bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-400 dark:border-rose-800 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
@@ -329,7 +362,17 @@ export default function ListingDetailPage() {
 
             {/* Dual CTAs: Request Porter Delivery & Make Offer */}
             <div className="space-y-2.5 pt-2">
-              {isApproved ? (
+              {listing.status === 'SOLD' ? (
+                <div className="p-4 rounded-2xl bg-zinc-900 border border-amber-500/30 text-center space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 font-bold text-xs border border-amber-500/20">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Deal Closed &bull; Product Sold Out
+                  </span>
+                  <p className="text-[11px] text-zinc-400">
+                    Negotiation finalized and courier dispatched. This listing is no longer available.
+                  </p>
+                </div>
+              ) : isApproved ? (
                 <>
                   <button
                     onClick={() => setShowDeliveryModal(true)}

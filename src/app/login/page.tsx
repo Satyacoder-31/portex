@@ -341,8 +341,8 @@ function LoginForm() {
         selectedRole === 'DRIVER'
           ? '/driver'
           : selectedRole === 'SELLER'
-          ? '/dashboard?tab=listings'
-          : '/dashboard';
+            ? '/dashboard?tab=listings'
+            : '/dashboard';
       router.push(target);
     }, 600);
   };
@@ -380,7 +380,7 @@ function LoginForm() {
       </div>
 
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        
+
         {/* Left Side: Brand Value & Trust Card */}
         <div className="lg:col-span-5 bg-gradient-to-br from-blue-700 via-indigo-800 to-blue-950 rounded-3xl p-6 sm:p-8 text-white flex flex-col justify-between shadow-xl relative overflow-hidden">
           {/* Subtle Ambient Background Gradients */}
@@ -455,28 +455,26 @@ function LoginForm() {
 
         {/* Right Side: Clean Authentication Box */}
         <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-center">
-          
+
           {/* Top Tab Toggle: Sign In vs Create Account */}
           <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-6">
             <button
               type="button"
               onClick={() => setActiveTab('login')}
-              className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'login'
+              className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'login'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('register')}
-              className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'register'
+              className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'register'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               Create Account
             </button>
@@ -696,11 +694,10 @@ function LoginForm() {
                     setLoginMethod('password');
                     setErrorMessage(null);
                   }}
-                  className={`flex-1 py-1.5 px-3 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
-                    loginMethod === 'password'
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${loginMethod === 'password'
                       ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800'
                       : 'text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
-                  }`}
+                    }`}
                 >
                   Password Login
                 </button>
@@ -710,11 +707,10 @@ function LoginForm() {
                     setLoginMethod('otp');
                     setErrorMessage(null);
                   }}
-                  className={`flex-1 py-1.5 px-3 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
-                    loginMethod === 'otp'
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${loginMethod === 'otp'
                       ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800'
                       : 'text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
-                  }`}
+                    }`}
                 >
                   Mobile OTP Login
                 </button>
@@ -938,11 +934,10 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setSelectedRole('BUYER')}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      selectedRole === 'BUYER'
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${selectedRole === 'BUYER'
                         ? 'border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <ShoppingBag className="w-4 h-4 text-blue-600" />
@@ -955,11 +950,10 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setSelectedRole('ENTERPRISE')}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      selectedRole === 'ENTERPRISE'
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${selectedRole === 'ENTERPRISE'
                         ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <Truck className="w-4 h-4 text-emerald-600" />
@@ -972,11 +966,10 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setSelectedRole('SELLER')}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      selectedRole === 'SELLER'
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${selectedRole === 'SELLER'
                         ? 'border-purple-600 bg-purple-50/60 dark:bg-purple-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <Banknote className="w-4 h-4 text-purple-600" />
@@ -989,11 +982,10 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setSelectedRole('DRIVER')}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      selectedRole === 'DRIVER'
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${selectedRole === 'DRIVER'
                         ? 'border-amber-500 bg-amber-50/60 dark:bg-amber-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <Zap className="w-4 h-4 text-amber-500" />

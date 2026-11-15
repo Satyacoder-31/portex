@@ -250,6 +250,7 @@ function DashboardContent() {
       case 'SELLER':
         return [
           { id: 'listings', label: `Store Catalog (${myListings.length})` },
+          { id: 'deliveries', label: `Dispatched & Sold Orders (${deliveries.length})` },
           { id: 'offers', label: `Buyer Price Offers (${myListings.length > 0 ? 1 : 0})` },
           { id: 'payouts', label: 'Escrow UPI Payouts' },
           { id: 'profile', label: 'Store & Pickup Setup' },
@@ -842,9 +843,19 @@ function DashboardContent() {
       {(activeTab === 'deliveries' || activeTab === 'trips') && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-              {userRole === 'DRIVER' ? 'Assigned Driver Trips' : 'My Deliveries & Courier Orders'} ({deliveries.length})
-            </h3>
+            <div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                {userRole === 'DRIVER'
+                  ? 'Assigned Driver Trips'
+                  : userRole === 'SELLER'
+                  ? 'Dispatched & Sold Goods Fulfillment Records'
+                  : 'My Orders & Delivery History'}{' '}
+                ({deliveries.length})
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Permanent records of all order deliveries, logistics OTPs, and escrow settlements
+              </p>
+            </div>
             {userRole !== 'DRIVER' && (
               <Link
                 href="/deliver"
@@ -857,46 +868,65 @@ function DashboardContent() {
           </div>
 
           <div className="space-y-3">
-            {deliveries.map(del => (
-              <div
-                key={del.id}
-                className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-emerald-600">{del.trackingNumber}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">
-                      {del.status.replace(/_/g, ' ')}
-                    </span>
+            {deliveries.map(del => {
+              const isDelivered = del.status === 'DELIVERED';
+              return (
+                <div
+                  key={del.id}
+                  className="p-4 sm:p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
+                >
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{del.trackingNumber}</span>
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
+                          isDelivered
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                        }`}
+                      >
+                        {isDelivered ? '✓ Delivered & Closed' : del.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-xs">
+                      {del.packageType}
+                    </h4>
+                    <div className="text-slate-600 dark:text-slate-400 text-[11px]">
+                      {del.pickup.address.split(',')[0]} &rarr; {del.drop.address.split(',')[0]}
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      Vehicle: {del.vehicleType.replace(/_/g, ' ')} &bull; Weight: {del.packageWeightKg} kg &bull;{' '}
+                      {isDelivered ? 'POD Verified' : `Pickup OTP: ${del.pickup.otp}`}
+                    </div>
                   </div>
-                  <div className="text-slate-600 dark:text-slate-300">
-                    {del.pickup.address.split(',')[0]} &rarr; {del.drop.address.split(',')[0]}
-                  </div>
-                  <div className="text-[10px] text-slate-400">
-                    Vehicle: {del.vehicleType.replace(/_/g, ' ')} &bull; {del.packageType}
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  <span className="font-black text-sm text-slate-900 dark:text-white mr-2">
-                    ₹{del.pricing.totalAmount}
-                  </span>
-                  <Link
-                    href={`/tracking/${del.trackingNumber}`}
-                    className="py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm"
-                  >
-                    Track Live &rarr;
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedInvoiceBooking(del)}
-                    className="py-1.5 px-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold"
-                  >
-                    Invoice
-                  </button>
+                  <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                    <div className="text-right mr-2">
+                      <span className="font-black text-sm text-slate-900 dark:text-white block">
+                        ₹{del.pricing.totalAmount}
+                      </span>
+                      <span className="text-[10px] text-emerald-500 font-medium">
+                        {isDelivered ? 'Escrow Released' : 'Held in Escrow'}
+                      </span>
+                    </div>
+
+                    <Link
+                      href={`/tracking/${del.trackingNumber}`}
+                      className="py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm"
+                    >
+                      {isDelivered ? 'View POD' : 'Track Live \u2192'}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedInvoiceBooking(del)}
+                      className="py-1.5 px-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer"
+                    >
+                      Invoice
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

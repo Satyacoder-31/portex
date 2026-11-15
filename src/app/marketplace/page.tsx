@@ -100,6 +100,11 @@ function MarketplaceContent() {
           return false;
         }
 
+        // Sold or Inactive items must NOT show in the buyers login
+        if (item.status === 'SOLD' || item.status === 'EXPIRED') {
+          return false;
+        }
+
         // Strict Admin Verification Gate:
         // Unless and until the Admin accepts/approves the item, it must NOT go live or be visible to buyers.
         const isApproved = (item.verificationStatus || 'APPROVED') === 'APPROVED';

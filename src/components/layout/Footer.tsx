@@ -2,11 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Truck, ShieldCheck, Lock, Heart, Award, ArrowUpRight } from 'lucide-react';
 import { usePortex } from '@/lib/store/portexStore';
 
 export default function Footer() {
+  const pathname = usePathname();
   const { businessProfile } = usePortex();
+
+  // Hide large marketing footer on full-height chat messenger
+  if (pathname === '/chat') return null;
 
   return (
     <footer className="bg-[#060608] text-zinc-400 pt-16 pb-12 border-t border-amber-500/20">

@@ -45,6 +45,9 @@ export default function BottomNav() {
     ];
   }
 
+  // Hide mobile bottom nav on chat page so the message input bar stays fully accessible
+  if (pathname === '/chat') return null;
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#09090b]/95 backdrop-blur-2xl border-t border-amber-500/20 px-3 py-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl">
       <div className="flex items-center justify-around">
