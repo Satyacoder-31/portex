@@ -12,7 +12,7 @@ interface ListingCardProps {
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
-  const { toggleFavorite, isFavorite, renewListing, currentUser, showToast } = usePortex();
+  const { toggleFavorite, isFavorite, renewListing, currentUser, showToast, verifyListing } = usePortex();
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const favorite = isFavorite(listing.id);
   const isExpired = listing.status === 'EXPIRED';
@@ -157,6 +157,14 @@ export default function ListingCard({ listing }: ListingCardProps) {
               >
                 <RotateCcw className="w-3 h-3 flex-shrink-0" />
                 <span>Renew Ad</span>
+              </button>
+            ) : listing.verificationStatus === 'PENDING' ? (
+              <button
+                onClick={() => verifyListing(listing.id, 'APPROVED')}
+                className="px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black text-[10px] sm:text-xs font-black flex items-center justify-center gap-1 shadow-sm transition-all cursor-pointer"
+                title="Approve item so it goes live for all buyers"
+              >
+                <span>⚡ Quick Approve</span>
               </button>
             ) : (
               <button

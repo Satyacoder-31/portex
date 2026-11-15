@@ -159,6 +159,19 @@ export default function ListingDetailPage() {
               </p>
             </div>
           </div>
+
+          {(currentUser.id === listing.sellerId || currentUser.name === listing.sellerName) && (
+            <button
+              onClick={() => {
+                verifyListing(listing.id, 'APPROVED');
+                showToast(`Listing "${listing.title}" approved & published live!`);
+              }}
+              className="mt-2 sm:mt-0 px-4 py-2 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-transform hover:scale-105 cursor-pointer self-start sm:self-auto flex-shrink-0"
+            >
+              <CheckCircle2 className="w-4 h-4 text-black" />
+              <span>⚡ Quick-Approve Now</span>
+            </button>
+          )}
         </div>
       )}
 

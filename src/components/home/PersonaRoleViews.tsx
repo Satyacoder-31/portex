@@ -279,9 +279,9 @@ export function DriverHomeView() {
       {/* Top Cockpit Header */}
       <div className="p-6 bg-slate-950 text-white rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="relative shrink-0 flex-shrink-0">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 aspect-square rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-500 text-slate-950 font-black text-xl sm:text-2xl flex items-center justify-center shadow-lg shadow-amber-500/20">
                 RK
               </div>
               {isDriverOnline && (
@@ -897,11 +897,11 @@ export function EnterpriseHomeView() {
       {/* Enterprise Operations Banner */}
       <div className="p-6 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-3xl border border-emerald-500/30 shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg">
-              <Truck className="w-8 h-8 text-white" />
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 aspect-square rounded-2xl bg-emerald-600 text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg">
+              <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-black">Sharma Electronics &amp; Logistics Hub</h1>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -1230,42 +1230,55 @@ export function EnterpriseHomeView() {
  */
 export function SellerHomeView() {
   const router = useRouter();
-  const { listings, currentUser, showToast, setUserRole, deleteListing, dispatchProductDelivery } = usePortex();
+  const { listings, currentUser, showToast, setUserRole, deleteListing, dispatchProductDelivery, verifyListing } = usePortex();
   const [hasDispatchedId, setHasDispatchedId] = useState<string | null>(null);
 
-  const myListings = listings.filter(l => l.sellerId === currentUser.id || l.sellerName === currentUser.name);
+  const myListings = listings.filter(
+    l =>
+      l.sellerId === currentUser.id ||
+      l.sellerName === currentUser.name ||
+      (currentUser.role === 'SELLER' && (l.sellerId === 'usr_seller_02' || l.sellerName === 'Priya Patel'))
+  );
 
   return (
-    <div className="space-y-6 mb-10">
-      {/* Seller Studio Banner */}
-      <div className="p-6 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white rounded-3xl border border-blue-500/30 shadow-2xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-black text-2xl flex items-center justify-center shadow-lg">
-              <ShoppingBag className="w-8 h-8" />
+    <div className="space-y-6 mb-10 w-full max-w-full overflow-hidden">
+      {/* Seller Studio Banner (Luxury Gold & Black) */}
+      <div className="p-4 sm:p-6 bg-gradient-to-br from-[#0c0c10] via-[#14141c] to-[#07070a] text-white rounded-3xl border-2 border-amber-500/30 shadow-2xl shadow-black relative overflow-hidden">
+        {/* Ambient Gold Glows */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            {/* Store Icon Box: Guaranteed perfect square with shrink-0 aspect-square */}
+            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 aspect-square rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500 text-slate-950 font-black flex items-center justify-center shadow-lg shadow-amber-500/25">
+              <ShoppingBag className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2] text-black" />
             </div>
-            <div>
+
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-black">{currentUser.marketplaceProfile?.shopOrDisplayName || 'Patel Curated Home & Vintage Studio'}</h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                <h1 className="text-base sm:text-xl font-black text-white truncate max-w-full">
+                  {currentUser.marketplaceProfile?.shopOrDisplayName || 'Patel Curated Home & Vintage Pre-Owned'}
+                </h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                   Verified Merchant Store
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   4.88 ⭐ ({currentUser.totalDeals || 42} Deals)
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                UPI Escrow Linked: <span className="font-mono text-emerald-400 font-bold">{currentUser.marketplaceProfile?.payoutUpiId || 'priyapatel@okaxis'}</span> &bull; 0% Platform Commission
+              <p className="text-xs text-zinc-400 mt-1 truncate">
+                UPI Escrow Linked: <span className="font-mono text-amber-400 font-bold">{currentUser.marketplaceProfile?.payoutUpiId || 'priyapatel@okaxis'}</span> &bull; 0% Platform Commission
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <Link
               href="/sell"
-              className="py-3 px-5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 text-white font-black text-xs rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
+              className="py-2.5 sm:py-3 px-4 sm:px-5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
+              <PlusCircle className="w-4 h-4 text-black" />
               <span>+ Post New Product</span>
             </Link>
 
@@ -1276,65 +1289,73 @@ export function SellerHomeView() {
                 router.push('/marketplace');
                 showToast('Switched to Buyer Marketplace');
               }}
-              className="py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/15 transition-colors cursor-pointer flex items-center gap-1.5"
+              className="py-2.5 sm:py-3 px-3.5 sm:px-4 bg-zinc-900/90 hover:bg-zinc-800 text-amber-300 font-bold text-xs rounded-xl border border-amber-500/30 transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <Eye className="w-3.5 h-3.5" />
+              <Eye className="w-3.5 h-3.5 text-amber-400" />
               <span>View as Buyer</span>
             </button>
           </div>
         </div>
 
-        {/* Merchant Metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/10">
-          <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-            <span className="text-[10px] font-bold text-slate-300 uppercase block">Active Products</span>
-            <div className="text-lg font-black text-white mt-0.5">{myListings.length} Live</div>
-            <span className="text-[10px] text-emerald-400 font-semibold">{myListings.length > 0 ? 'Indexed on Buyer Site' : 'No items yet'}</span>
+        {/* Merchant Metrics in Gold & Black */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-5 pt-5 border-t border-zinc-800">
+          <div className="p-3 bg-[#13131a] rounded-2xl border border-amber-500/20">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase block">Active Products</span>
+            <div className="text-base sm:text-lg font-black text-white mt-0.5">{myListings.length} Products</div>
+            <span className="text-[10px] text-amber-400 font-semibold truncate block">
+              {myListings.length > 0 ? `${myListings.filter(l => (l.verificationStatus || 'APPROVED') === 'APPROVED').length} Approved & Live` : 'No items yet'}
+            </span>
           </div>
 
-          <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-            <span className="text-[10px] font-bold text-slate-300 uppercase block">Product Views</span>
-            <div className="text-lg font-black text-blue-400 mt-0.5">
+          <div className="p-3 bg-[#13131a] rounded-2xl border border-amber-500/20">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase block">Product Views</span>
+            <div className="text-base sm:text-lg font-black text-amber-400 mt-0.5">
               {myListings.reduce((acc, l) => acc + (l.views || 0), 0)} Views
             </div>
-            <span className="text-[10px] text-slate-400 font-semibold">{myListings.length > 0 ? 'Active Inquiries' : 'No views'}</span>
+            <span className="text-[10px] text-zinc-400 font-semibold truncate block">
+              {myListings.length > 0 ? 'Active Inquiries' : 'No views'}
+            </span>
           </div>
 
-          <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-            <span className="text-[10px] font-bold text-slate-300 uppercase block">Escrow Balance</span>
-            <div className="text-lg font-black text-emerald-400 mt-0.5">
+          <div className="p-3 bg-[#13131a] rounded-2xl border border-amber-500/20">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase block">Escrow Balance</span>
+            <div className="text-base sm:text-lg font-black text-emerald-400 mt-0.5 font-mono">
               ₹{myListings.length > 0 ? (myListings[0].price * 0.9).toLocaleString('en-IN') : '0.00'}
             </div>
-            <span className="text-[10px] text-slate-400 font-semibold">Auto-released on delivery</span>
+            <span className="text-[10px] text-zinc-400 font-semibold truncate block">Auto-released on delivery</span>
           </div>
 
-          <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-            <span className="text-[10px] font-bold text-slate-300 uppercase block">Buyer Negotiations</span>
-            <div className="text-lg font-black text-amber-400 mt-0.5">{myListings.length > 0 ? '1 Pending' : '0 Pending'}</div>
-            <span className="text-[10px] text-amber-300 font-semibold">{myListings.length > 0 ? 'Review offer below' : 'No pending offers'}</span>
+          <div className="p-3 bg-[#13131a] rounded-2xl border border-amber-500/20">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase block">Buyer Negotiations</span>
+            <div className="text-base sm:text-lg font-black text-yellow-400 mt-0.5 font-mono">
+              {myListings.length > 0 ? '1 Pending' : '0 Pending'}
+            </div>
+            <span className="text-[10px] text-yellow-300 font-semibold truncate block">
+              {myListings.length > 0 ? 'Review offer below' : 'No pending offers'}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 🛒 ACTIVE STORE INVENTORY (Live on Buyer Site) */}
-      <div className="p-5 sm:p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+      {/* 🛒 ACTIVE STORE INVENTORY (Gold & Black Theme) */}
+      <div className="p-4 sm:p-6 bg-[#0a0a0e] rounded-3xl border border-zinc-800 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-base font-black text-slate-900 dark:text-white">
-                Your Store Catalog (Live for Buyers)
+              <ShoppingBag className="w-5 h-5 text-amber-400" />
+              <h2 className="text-sm sm:text-base font-black text-white">
+                Your Store Catalog &amp; Active Inventory
               </h2>
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                {myListings.length} Active Products
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                {myListings.length} Products
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Every product listed below is active and can be browsed, negotiated, or delivered to buyers across Lucknow.
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Items verified by Admin are live on the Buyer Marketplace across Lucknow.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => {
@@ -1342,17 +1363,17 @@ export function SellerHomeView() {
                 router.push('/marketplace');
                 showToast('Switched to Buyer Marketplace view');
               }}
-              className="py-2 px-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Preview on Buyer Site</span>
+              <Eye className="w-3.5 h-3.5 text-amber-400" />
+              <span>Preview as Buyer</span>
             </button>
 
             <Link
               href="/sell"
-              className="py-2 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white text-xs font-extrabold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black text-xs font-extrabold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3.5 h-3.5 text-black" />
               <span>+ Add Product</span>
             </Link>
           </div>
@@ -1360,92 +1381,120 @@ export function SellerHomeView() {
 
         {myListings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myListings.map(item => (
-              <div
-                key={item.id}
-                className="group p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:border-blue-500/50 hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 mb-2.5">
-                  <img
-                    src={item.images[0] || 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80'}
-                    alt={item.title}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80';
-                    }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-2 left-2 flex items-center gap-1">
-                    <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
-                      LIVE ON BUYER SITE
-                    </span>
-                  </div>
-                  <div className="absolute bottom-1.5 right-1.5 bg-black/70 backdrop-blur-sm text-slate-200 text-[9px] font-semibold px-1.5 py-0.5 rounded">
-                    {item.images.length} Photo{item.images.length > 1 ? 's' : ''}
-                  </div>
-                </div>
+            {myListings.map(item => {
+              const isApproved = (item.verificationStatus || 'APPROVED') === 'APPROVED';
+              const isSold = item.status === 'SOLD';
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                      {item.category} &bull; {item.condition.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{item.createdAt}</span>
+              return (
+                <div
+                  key={item.id}
+                  className="group p-3 rounded-2xl bg-[#111116] border border-zinc-800 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 transition-all flex flex-col justify-between"
+                >
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-zinc-950 mb-2.5">
+                    <img
+                      src={item.images[0] || 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80'}
+                      alt={item.title}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80';
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-2 left-2 flex items-center gap-1 flex-wrap">
+                      {isSold ? (
+                        <span className="bg-zinc-800 text-amber-300 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm border border-amber-500/40">
+                          ✓ SOLD &amp; CLOSED
+                        </span>
+                      ) : isApproved ? (
+                        <span className="bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                          ✓ LIVE ON BUYER SITE
+                        </span>
+                      ) : (
+                        <span className="bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-pulse">
+                          ⏳ PENDING ADMIN APPROVAL
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute bottom-1.5 right-1.5 bg-black/80 backdrop-blur-sm text-zinc-300 text-[9px] font-semibold px-1.5 py-0.5 rounded border border-white/10">
+                      {item.images.length} Photo{item.images.length > 1 ? 's' : ''}
+                    </div>
                   </div>
-                  <h4 className="font-extrabold text-xs text-slate-900 dark:text-white line-clamp-1">
-                    {item.title}
-                  </h4>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-base font-black text-blue-600 dark:text-blue-400">
-                      ₹{item.price.toLocaleString('en-IN')}
-                    </span>
-                    {item.originalPrice && (
-                      <span className="text-[10px] text-slate-400 line-through">
-                        ₹{item.originalPrice.toLocaleString('en-IN')}
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-zinc-400">
+                      <span className="font-bold uppercase tracking-wide text-amber-400/80">
+                        {item.category} &bull; {item.condition.replace(/_/g, ' ')}
                       </span>
+                      <span>{item.createdAt}</span>
+                    </div>
+                    <h4 className="font-extrabold text-xs text-white line-clamp-1 group-hover:text-amber-400 transition-colors">
+                      {item.title}
+                    </h4>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-black text-amber-400 font-mono">
+                        ₹{item.price.toLocaleString('en-IN')}
+                      </span>
+                      {item.originalPrice && (
+                        <span className="text-[10px] text-zinc-500 line-through">
+                          ₹{item.originalPrice.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="pt-3 mt-3 border-t border-zinc-800/80 flex items-center gap-2">
+                    {!isApproved && !isSold ? (
+                      <button
+                        type="button"
+                        onClick={() => verifyListing(item.id, 'APPROVED')}
+                        className="flex-1 py-1.5 text-center text-xs font-black text-black bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1"
+                        title="Simulate Admin instant approval"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-black" />
+                        <span>⚡ Quick-Approve</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/listings/${item.id}`}
+                        className="flex-1 py-1.5 text-center text-xs font-bold text-black bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-black" />
+                        <span>View as Buyer</span>
+                      </Link>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteListing(item.id);
+                        showToast('Product removed from catalog and buyer site.');
+                      }}
+                      className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-950/40 border border-rose-900/40 transition-colors cursor-pointer"
+                      title="Remove from Marketplace"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="pt-3 mt-3 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
-                  <Link
-                    href={`/listings/${item.id}`}
-                    className="flex-1 py-1.5 text-center text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-xs flex items-center justify-center gap-1"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>View as Buyer</span>
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      deleteListing(item.id);
-                      showToast('Product removed from catalog and buyer site.');
-                    }}
-                    className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors cursor-pointer"
-                    title="Remove from Marketplace"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 space-y-3">
-            <ShoppingBag className="w-10 h-10 mx-auto text-slate-400" />
+          <div className="p-8 text-center bg-[#111116] rounded-2xl border border-dashed border-zinc-800 space-y-3">
+            <ShoppingBag className="w-10 h-10 mx-auto text-amber-400/50" />
             <div>
-              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+              <h4 className="text-sm font-bold text-white">
                 No active products posted yet
               </h4>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Post your first product with photos, price, and dimensions to start receiving buyer offers.
               </p>
             </div>
             <Link
               href="/sell"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black text-xs font-black rounded-xl shadow-md transition-all cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
+              <PlusCircle className="w-4 h-4 text-black" />
               <span>Post Your First Product</span>
             </Link>
           </div>
@@ -1454,54 +1503,53 @@ export function SellerHomeView() {
 
       {/* Buyer Negotiations & Ready to Dispatch Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
         {/* Card 1: Pending Buyer Offers */}
-        <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="p-4 sm:p-5 bg-[#0a0a0e] rounded-3xl border border-zinc-800 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-amber-500" />
-              <h3 className="font-black text-sm text-slate-900 dark:text-white">
+              <MessageSquare className="w-4 h-4 text-amber-400" />
+              <h3 className="font-black text-sm text-white">
                 Buyer Price Offers Awaiting Approval
               </h3>
             </div>
             {myListings.length > 0 && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                 1 Offer Pending
               </span>
             )}
           </div>
 
           {myListings.length === 0 ? (
-            <div className="p-6 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 space-y-2">
-              <MessageSquare className="w-8 h-8 mx-auto text-slate-400" />
-              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            <div className="p-6 text-center bg-[#111116] rounded-2xl border border-dashed border-zinc-800 space-y-2">
+              <MessageSquare className="w-8 h-8 mx-auto text-zinc-500" />
+              <h4 className="text-xs font-bold text-zinc-300">
                 No buyer offers yet
               </h4>
-              <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-                You haven&apos;t added any products to your catalog yet. Once you post your products, buyer negotiations and price offers will appear here.
+              <p className="text-[11px] text-zinc-400 max-w-xs mx-auto">
+                Once you post your products, buyer negotiations and price offers will appear here.
               </p>
               <Link
                 href="/sell"
-                className="inline-flex items-center gap-1.5 px-4 py-2 mt-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-black font-extrabold text-xs rounded-xl shadow-sm"
+                className="inline-flex items-center gap-1.5 px-4 py-2 mt-2 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black font-extrabold text-xs rounded-xl shadow-sm"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>+ Add Product to Sell</span>
               </Link>
             </div>
           ) : (
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <div className="p-4 bg-[#111116] rounded-2xl border border-zinc-800 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">
+                  <h4 className="font-bold text-xs text-white line-clamp-1">
                     {myListings[0].title}
                   </h4>
-                  <p className="text-[10px] text-slate-500">Asking Price: ₹{myListings[0].price.toLocaleString('en-IN')}</p>
+                  <p className="text-[10px] text-zinc-400">Asking Price: ₹{myListings[0].price.toLocaleString('en-IN')}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block">
+                  <span className="text-xs font-black text-emerald-400 block font-mono">
                     Offer: ₹{Math.round(myListings[0].price * 0.9).toLocaleString('en-IN')}
                   </span>
-                  <span className="text-[10px] text-slate-400">By Rahul Verma</span>
+                  <span className="text-[10px] text-zinc-400">By Rahul Verma</span>
                 </div>
               </div>
 
@@ -1512,13 +1560,13 @@ export function SellerHomeView() {
                     confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
                     showToast(`Offer of ₹${Math.round(myListings[0].price * 0.9).toLocaleString('en-IN')} accepted! Buyer Rahul Verma notified.`);
                   }}
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
                 >
                   Accept Offer (₹{Math.round(myListings[0].price * 0.9).toLocaleString('en-IN')})
                 </button>
                 <Link
                   href="/chat"
-                  className="py-2 px-3 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold"
+                  className="py-2 px-3 bg-zinc-900 hover:bg-zinc-800 text-amber-300 border border-zinc-700 rounded-xl text-xs font-bold"
                 >
                   Chat / Counter
                 </Link>
@@ -1528,44 +1576,44 @@ export function SellerHomeView() {
         </div>
 
         {/* Card 2: 1-Click Porter Delivery for Sold Goods */}
-        <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="p-4 sm:p-5 bg-[#0a0a0e] rounded-3xl border border-zinc-800 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-emerald-600" />
-              <h3 className="font-black text-sm text-slate-900 dark:text-white">
+              <Truck className="w-4 h-4 text-amber-400" />
+              <h3 className="font-black text-sm text-white">
                 Dispatch Sold Goods to Buyers
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
               Doorstep Porter
             </span>
           </div>
 
           {myListings.length === 0 ? (
-            <div className="p-6 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 space-y-2">
-              <Truck className="w-8 h-8 mx-auto text-slate-400" />
-              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            <div className="p-6 text-center bg-[#111116] rounded-2xl border border-dashed border-zinc-800 space-y-2">
+              <Truck className="w-8 h-8 mx-auto text-zinc-500" />
+              <h4 className="text-xs font-bold text-zinc-300">
                 No sold goods awaiting dispatch
               </h4>
-              <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-                Once a buyer completes payment or agrees on price, 1-click Porter delivery dispatch will appear here to assign matching 2-wheelers, 3-wheelers, or mini trucks.
+              <p className="text-[11px] text-zinc-400 max-w-xs mx-auto">
+                Once a buyer completes payment or agrees on price, 1-click Porter delivery dispatch will appear here.
               </p>
             </div>
           ) : (
-            <div className="p-4 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/20 space-y-3 text-xs">
+            <div className="p-4 bg-[#111116] rounded-2xl border border-zinc-800 space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white line-clamp-1">
+                  <h4 className="font-bold text-white line-clamp-1">
                     {myListings[0].title}
                   </h4>
-                  <span className="text-[10px] text-slate-500">Weight: {myListings[0].weightKg} kg &bull; Buyer: Rahul Verma (Gomti Nagar)</span>
+                  <span className="text-[10px] text-zinc-400">Weight: {myListings[0].weightKg} kg &bull; Buyer: Rahul Verma (Gomti Nagar)</span>
                 </div>
-                <span className="text-emerald-600 font-black">₹{myListings[0].price.toLocaleString('en-IN')}</span>
+                <span className="text-amber-400 font-black font-mono">₹{myListings[0].price.toLocaleString('en-IN')}</span>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-950/40 border border-emerald-500/20 flex items-center justify-between">
-                <span className="text-[11px] text-slate-300">
-                  Recommended Fleet: <strong className="text-amber-400 font-bold">
+              <div className="p-2.5 rounded-xl bg-black/60 border border-zinc-800 flex items-center justify-between">
+                <span className="text-[11px] text-zinc-300">
+                  Fleet Match: <strong className="text-amber-400 font-bold">
                     {myListings[0].weightKg <= 20
                       ? '🏍️ 2-Wheeler (Express Bike)'
                       : myListings[0].weightKg <= 500
@@ -1573,8 +1621,8 @@ export function SellerHomeView() {
                       : '🚚 Tata Ace Mini Truck'}
                   </strong>
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-                  Auto-Calculated
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                  Auto-Matched
                 </span>
               </div>
 
@@ -1599,16 +1647,15 @@ export function SellerHomeView() {
                     confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
                     showToast(`🚀 Dispatched "${myListings[0].title.slice(0, 20)}"! Driver notification sent.`);
                   }}
-                  className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer transition-all hover:scale-[1.01]"
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/25 cursor-pointer transition-all hover:scale-[1.01]"
                 >
-                  <Truck className="w-4 h-4" />
+                  <Truck className="w-4 h-4 text-black" />
                   <span>Call Porter Dispatch for Buyer &rarr;</span>
                 </button>
               )}
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

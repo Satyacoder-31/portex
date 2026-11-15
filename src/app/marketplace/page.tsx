@@ -106,9 +106,14 @@ function MarketplaceContent() {
         }
 
         // Strict Admin Verification Gate:
-        // Unless and until the Admin accepts/approves the item, it must NOT go live or be visible to buyers.
+        // Unapproved items are hidden from general buyers, but visible to Admin and the Seller who posted them
         const isApproved = (item.verificationStatus || 'APPROVED') === 'APPROVED';
-        if (!isApproved && userRole !== 'ADMIN') {
+        const isMyOwnItem =
+          item.sellerId === currentUser.id ||
+          item.sellerName === currentUser.name ||
+          (userRole === 'SELLER' && (item.sellerId === 'usr_seller_02' || item.sellerName === 'Priya Patel'));
+
+        if (!isApproved && userRole !== 'ADMIN' && !isMyOwnItem) {
           return false;
         }
 
@@ -119,7 +124,7 @@ function MarketplaceContent() {
         if (sortBy === 'price_desc') return b.price - a.price;
         return 0; // featured/newest
       });
-  }, [listings, searchQuery, selectedCategory, selectedCondition, maxPrice, verifiedOnly, sortBy]);
+  }, [listings, searchQuery, selectedCategory, selectedCondition, maxPrice, verifiedOnly, sortBy, userRole, currentUser]);
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">

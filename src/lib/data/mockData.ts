@@ -472,12 +472,12 @@ export const INITIAL_LISTINGS: Listing[] = [
       'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=1000&q=80',
       'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1000&q=80'
     ],
-    sellerId: 'usr_seller_1',
-    sellerName: 'Arjun Singhania',
-    sellerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    sellerRating: 4.95,
+    sellerId: 'usr_seller_02',
+    sellerName: 'Priya Patel',
+    sellerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=250&q=80',
+    sellerRating: 4.88,
     sellerIsVerified: true,
-    sellerPhone: '+91 99351 88201',
+    sellerPhone: '+91 97654 32109',
     location: {
       address: 'Near Aliganj Crossing, Sector-I, Aliganj',
       city: 'Lucknow',

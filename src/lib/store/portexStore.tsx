@@ -649,39 +649,57 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
     rating: 4.92,
   });
 
-  // Load persisted state from localStorage on client mount
+  // Cross-device server sync function (fetches newest products & deliveries across mobile and PC)
+  const syncFromServer = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const res = await fetch('/api/listings', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.listings) && data.listings.length > 0) {
+          setListings(prev => {
+            // Index existing server listings
+            const serverListings: Listing[] = data.listings;
+            const serverIds = new Set(serverListings.map(l => l.id));
+            // Keep local-only listings that haven't been stored on server yet
+            const localOnly = prev.filter(l => !serverIds.has(l.id));
+            const merged = [...localOnly, ...serverListings];
+            try {
+              localStorage.setItem('portex_listings', JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
+        }
+      }
+
+      const delRes = await fetch('/api/deliveries', { cache: 'no-store' });
+      if (delRes.ok) {
+        const delData = await delRes.json();
+        if (delData.success && Array.isArray(delData.deliveries) && delData.deliveries.length > 0) {
+          setDeliveries(prev => {
+            const serverDeliveries: DeliveryBooking[] = delData.deliveries;
+            const serverIds = new Set(serverDeliveries.map(d => d.id));
+            const localOnly = prev.filter(d => !serverIds.has(d.id));
+            const merged = [...localOnly, ...serverDeliveries];
+            try {
+              localStorage.setItem('portex_deliveries', JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
+        }
+      }
+    } catch {
+      // Offline fallback
+    }
+  };
+
+  // Load persisted state from localStorage and synchronize with server
   useEffect(() => {
     try {
       const savedListings = localStorage.getItem('portex_listings');
       if (savedListings) {
         const parsed: Listing[] = JSON.parse(savedListings);
-        // Sanitize broken chair image or outdated links from client cache
-        const sanitized = parsed.map((item) => {
-          if (item.id === 'lst-105') {
-            return {
-              ...item,
-              images: [
-                'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=1000&q=80',
-                'https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=1000&q=80',
-                'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=1000&q=80',
-              ],
-            };
-          }
-          return {
-            ...item,
-            images: item.images.map((img) =>
-              img.includes('1580481077195')
-                ? 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=1000&q=80'
-                : img
-            ),
-          };
-        });
-        setListings(sanitized);
-        try {
-          localStorage.setItem('portex_listings', JSON.stringify(sanitized));
-        } catch {
-          // ignore
-        }
+        setListings(parsed);
       }
 
       const savedDeliveries = localStorage.getItem('portex_deliveries');
@@ -709,8 +727,21 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch {
-      // Fallback to in-memory initial data
+      // Fallback
     }
+
+    // Immediately trigger server sync
+    syncFromServer();
+
+    // Re-sync on window focus & every 6 seconds to keep mobile and PC in 100% real-time sync
+    const handleFocus = () => syncFromServer();
+    window.addEventListener('focus', handleFocus);
+    const intervalId = setInterval(syncFromServer, 6000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Sync back to localStorage
@@ -757,6 +788,18 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
+
+    // Synchronize to server API so mobile and laptop see the new listing immediately
+    if (typeof window !== 'undefined') {
+      try {
+        fetch('/api/listings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newListing),
+        }).catch(() => {});
+      } catch {}
+    }
+
     showToast(`📝 "${newListing.title.slice(0, 24)}..." submitted! Sent to Admin for verification.`);
     return newListing;
   };
@@ -780,6 +823,23 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
+
+    // Synchronize verification state to server
+    if (typeof window !== 'undefined') {
+      try {
+        fetch('/api/listings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: listingId,
+            verificationStatus: status,
+            status: status === 'APPROVED' ? 'ACTIVE' : undefined,
+            ...(overrideVehicle ? { recommendedVehicle: overrideVehicle } : {}),
+          }),
+        }).catch(() => {});
+      } catch {}
+    }
+
     if (status === 'APPROVED') {
       showToast('Product verified & approved by Admin! Now live on Marketplace.');
     } else {
@@ -798,6 +858,16 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
+
+    if (typeof window !== 'undefined') {
+      try {
+        fetch('/api/listings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...partial }),
+        }).catch(() => {});
+      } catch {}
+    }
   };
 
   const deleteListing = (id: string) => {
@@ -811,6 +881,13 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       broadcastSync('LISTINGS_UPDATED', { listings: updated });
       return updated;
     });
+
+    if (typeof window !== 'undefined') {
+      try {
+        fetch(`/api/listings?id=${id}`, { method: 'DELETE' }).catch(() => {});
+      } catch {}
+    }
+
     showToast('Listing removed from your catalog and buyer marketplace.');
   };
 
@@ -866,6 +943,16 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       return updated;
     });
+
+    if (typeof window !== 'undefined') {
+      try {
+        fetch('/api/deliveries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newBooking),
+        }).catch(() => {});
+      } catch {}
+    }
 
     // Mark associated product as SOLD so it no longer shows in buyer feeds
     if (booking.listingId) {
@@ -1035,6 +1122,17 @@ export function PortexProvider({ children }: { children: React.ReactNode }) {
       }
 
       broadcastSync('STAGE_UPDATED', { id, stage: newStage });
+
+      if (typeof window !== 'undefined') {
+        try {
+          fetch('/api/deliveries', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status: newStage }),
+          }).catch(() => {});
+        } catch {}
+      }
+
       return updated;
     });
     showToast(`Delivery status updated to: ${newStage.replace(/_/g, ' ')}`);

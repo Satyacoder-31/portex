@@ -60,6 +60,7 @@ function DashboardContent() {
     userRole,
     listings,
     deleteListing,
+    verifyListing,
     favorites,
     deliveries,
     openAuthModal,
@@ -233,7 +234,10 @@ function DashboardContent() {
   };
 
   const myListings = listings.filter(
-    l => l.sellerId === currentUser.id || l.sellerName === currentUser.name
+    l =>
+      l.sellerId === currentUser.id ||
+      l.sellerName === currentUser.name ||
+      (userRole === 'SELLER' && (l.sellerId === 'usr_seller_02' || l.sellerName === 'Priya Patel'))
   );
   const favoriteListings = listings.filter(l => favorites.includes(l.id));
 
@@ -314,12 +318,12 @@ function DashboardContent() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Role-Adapted Profile Overview Header */}
       <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="relative shrink-0 flex-shrink-0">
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500 shadow-md"
+              className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 aspect-square rounded-2xl object-cover border-2 border-amber-500 shadow-md"
             />
             <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 absolute -bottom-0.5 -right-0.5 border-2 border-white dark:border-slate-900" />
           </div>
@@ -779,55 +783,83 @@ function DashboardContent() {
           </div>
 
           {myListings.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {myListings.map(item => (
-                <div
-                  key={item.id}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between"
-                >
-                  <div className="relative aspect-video">
-                    <img
-                      src={item.images[0] || 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80'}
-                      alt={item.title}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80';
-                      }}
-                      className="w-full h-full object-cover"
-                    />
-                    <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
-                      LIVE ON BUYER SITE
-                    </span>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {myListings.map(item => {
+                const isApproved = (item.verificationStatus || 'APPROVED') === 'APPROVED';
+                const isSold = item.status === 'SOLD';
 
-                  <div className="p-3 space-y-1">
-                    <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
-                      {item.title}
-                    </h4>
-                    <div className="text-sm font-extrabold text-blue-600 dark:text-blue-400">
-                      ₹{item.price.toLocaleString('en-IN')}
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white dark:bg-[#0e0e12] rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm hover:border-amber-500/40 transition-all flex flex-col justify-between"
+                  >
+                    <div className="relative aspect-video">
+                      <img
+                        src={item.images[0] || 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80'}
+                        alt={item.title}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1589384267710-7a170981ca78?auto=format&fit=crop&w=600&q=80';
+                        }}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 left-2 flex items-center gap-1 flex-wrap">
+                        {isSold ? (
+                          <span className="bg-zinc-800 text-amber-300 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm border border-amber-500/40">
+                            ✓ SOLD &amp; CLOSED
+                          </span>
+                        ) : isApproved ? (
+                          <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                            ✓ LIVE ON BUYER SITE
+                          </span>
+                        ) : (
+                          <span className="bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
+                            ⏳ PENDING ADMIN APPROVAL
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-3 space-y-1">
+                      <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                        {item.title}
+                      </h4>
+                      <div className="text-sm font-black text-amber-500 dark:text-amber-400 font-mono">
+                        ₹{item.price.toLocaleString('en-IN')}
+                      </div>
+                    </div>
+
+                    <div className="p-3 pt-0 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          deleteListing(item.id);
+                          showToast('Listing removed from catalog');
+                        }}
+                        className="flex-1 py-1.5 text-[11px] font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-900 transition-colors cursor-pointer"
+                      >
+                        Delete
+                      </button>
+
+                      {!isApproved && !isSold ? (
+                        <button
+                          type="button"
+                          onClick={() => verifyListing(item.id, 'APPROVED')}
+                          className="flex-1 py-1.5 text-center text-[11px] font-black text-black bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-lg transition-all shadow-xs cursor-pointer"
+                        >
+                          ⚡ Quick-Approve
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/listings/${item.id}`}
+                          className="flex-1 py-1.5 text-center text-[11px] font-bold text-black bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors shadow-xs"
+                        >
+                          View Live &rarr;
+                        </Link>
+                      )}
                     </div>
                   </div>
-
-                  <div className="p-3 pt-0 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        deleteListing(item.id);
-                        showToast('Listing removed from catalog');
-                      }}
-                      className="flex-1 py-1.5 text-[11px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-900 transition-colors cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                    <Link
-                      href={`/listings/${item.id}`}
-                      className="flex-1 py-1.5 text-center text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs"
-                    >
-                      View Live &rarr;
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-2">

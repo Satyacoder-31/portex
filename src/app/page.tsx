@@ -31,7 +31,7 @@ import {
 } from '@/components/home/PersonaRoleViews';
 
 export default function HomePage() {
-  const { listings, showToast, userRole } = usePortex();
+  const { listings, showToast, userRole, currentUser } = usePortex();
   const [isVerifiedUnlocked, setIsVerifiedUnlocked] = useState(false);
 
   // Exact 10 Categories matching the user's reference screenshot (2 rows x 5 items)
@@ -405,10 +405,17 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Grid of Listings: only Admin-APPROVED products go live to buyers */}
+          {/* Grid of Listings: Admin-APPROVED products go live to all buyers, pending items visible to author */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5">
             {listings
-              .filter(listing => (listing.verificationStatus || 'APPROVED') === 'APPROVED' && listing.status === 'ACTIVE')
+              .filter(listing => {
+                if (listing.status === 'SOLD' || listing.status === 'EXPIRED') return false;
+                const isApproved = (listing.verificationStatus || 'APPROVED') === 'APPROVED';
+                const isMyOwn =
+                  listing.sellerId === currentUser?.id ||
+                  listing.sellerName === currentUser?.name;
+                return (isApproved || isMyOwn) && listing.status === 'ACTIVE';
+              })
               .map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}

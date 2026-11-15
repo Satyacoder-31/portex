@@ -41,7 +41,7 @@ interface PostItemWizardProps {
 
 export default function PostItemWizard({ onClose }: PostItemWizardProps) {
   const router = useRouter();
-  const { addListing, currentUser, setUserRole, showToast } = usePortex();
+  const { addListing, currentUser, setUserRole, showToast, verifyListing } = usePortex();
 
   const [step, setStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -244,12 +244,12 @@ export default function PostItemWizard({ onClose }: PostItemWizardProps) {
       category,
       subCategory,
       images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80'],
-      sellerId: currentUser.id,
-      sellerName: currentUser.name,
-      sellerAvatar: currentUser.avatar,
+      sellerId: currentUser?.id || 'usr_seller_02',
+      sellerName: currentUser?.name || 'Priya Patel',
+      sellerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=250&q=80',
       sellerRating: 4.9,
       sellerIsVerified: true,
-      sellerPhone: currentUser.phone,
+      sellerPhone: currentUser?.phone || '+91 97654 32109',
       location: {
         address,
         city,
@@ -956,7 +956,23 @@ export default function PostItemWizard({ onClose }: PostItemWizardProps) {
                   Your product has been submitted and queued for Admin review. As per Portex trust guidelines, once the admin verifies the product and confirms the delivery vehicle, it will automatically go LIVE to buyers in the marketplace!
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (publishedListingId) {
+                        verifyListing(publishedListingId, 'APPROVED');
+                        showToast('🎉 Listing approved & live on Buyer Marketplace!');
+                        router.push(`/listings/${publishedListingId}`);
+                        if (onClose) onClose();
+                      }
+                    }}
+                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-black" />
+                    <span>⚡ Quick-Approve &amp; Go Live Now</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -964,10 +980,10 @@ export default function PostItemWizard({ onClose }: PostItemWizardProps) {
                       router.push('/admin');
                       if (onClose) onClose();
                     }}
-                    className="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    <span>Open Admin Panel to Verify &amp; Approve</span>
+                    <span>Open Admin Panel</span>
                   </button>
 
                   <button
